@@ -882,8 +882,6 @@ function previewPhotos(input){
 function submitWeeklyCheckin(){
   var c=getActiveClient();
   if(!c){showToast('No active client — please log in again');return;}
-  var btn=document.querySelector('.submit-btn.pink');
-  if(btn){btn.disabled=true;btn.textContent='Submitting...';}
   var m={
     waistAbove:document.getElementById('m-waist-above').value,
     waistAt:document.getElementById('m-waist-at').value,
@@ -912,6 +910,7 @@ function submitWeeklyCheckin(){
     helpDetail:document.getElementById('wk-help-detail').value,
     anythingElse:document.getElementById('wk-anything-else').value
   };
+  // Fire-and-forget: write to Firestore in background, don't make user wait
   db.collection('checkins').add({
     clientId:entry.clientId,
     clientName:c.name||'Unknown',
@@ -934,14 +933,15 @@ function submitWeeklyCheckin(){
     helpDetail:entry.helpDetail||'',
     anythingElse:entry.anythingElse||'',
     submittedAt:firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function(){
-    showToast('Check-in sent to your coach! ✅');
-    initHome();
+  }).then(function(ref){
+    console.log('Check-in saved to cloud:',ref.id);
   }).catch(function(err){
-    if(btn){btn.disabled=false;btn.textContent='📋 Submit Check-in to Coach';}
-    showToast('Failed to send — check connection and try again');
-    console.warn('Check-in save error:',err.message||err);
+    showToast('Note: check-in may not have reached coach — try again');
+    console.warn('Check-in cloud error:',err.message||err);
   });
+  // Immediately show success — don't make client wait for server
+  showToast('Check-in sent to your coach! ✅');
+  initHome();
 }
 function updateClientPill(){
   var c=getActiveClient();
