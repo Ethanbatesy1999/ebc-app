@@ -196,6 +196,8 @@ body{display:flex;flex-direction:column;}
 </head>
 <body>
 
+<div id="login-screen" style="position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto;"></div>
+
 <div id="rest-bar">
   <span id="rest-label">Rest</span>
   <span id="rest-time">1:30</span>
@@ -972,7 +974,9 @@ function finishWorkout(){
   var hasLogged=ACTIVE_WK.exercises.some(function(e){return e.sets.some(function(s){return s.logged;});});
   if(!hasLogged&&!confirm('No sets logged. Save anyway?'))return;
   ACTIVE_WK.exercises.forEach(function(ex){delete ex._swapping;delete ex._prev;});
-  DB.workouts.push(ACTIVE_WK);saveDB();ACTIVE_WK=null;stopRest();
+  var wkToSave=ACTIVE_WK;
+  DB.workouts.push(wkToSave);saveDB();ACTIVE_WK=null;stopRest();
+  db.collection('workouts').add(wkToSave).catch(function(err){console.warn('Workout cloud save failed:',err.message);});
   showToast('Workout saved');renderWorkoutHome();
 }
 function cancelWorkout(){if(!confirm('Cancel workout? Progress will be lost.'))return;ACTIVE_WK=null;stopRest();renderWorkoutHome();}
@@ -1088,7 +1092,8 @@ function renderMore(){
     html+='<div class="more-item" onclick="switchToCoachMode()"><div class="mi-icon" style="background:rgba(123,94,167,0.15);">'+svgIcon('shuffle','#7b5ea7')+'</div><div class="mi-text"><div class="mi-title">Coach Login</div><div class="mi-desc">Access the admin panel</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
   }
   html+='<div class="more-item" onclick="openSettings()"><div class="mi-icon" style="background:rgba(255,145,0,0.1);">'+svgIcon('settings','var(--orange)')+'</div><div class="mi-text"><div class="mi-title">Settings</div><div class="mi-desc">Units, data</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
-  html+='<div style="text-align:center;margin-top:24px;color:var(--muted);font-size:12px;">Ethan Bates Coaching v2.0</div>';
+  html+='<div class="more-item" onclick="logout()" style="margin-top:8px;"><div class="mi-icon" style="background:rgba(255,23,68,0.1);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--red)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></div><div class="mi-text"><div class="mi-title" style="color:var(--red);">Log Out</div><div class="mi-desc">Switch account or client</div></div></div>';
+  html+='<div style="text-align:center;margin-top:24px;color:var(--muted);font-size:12px;">Ethan Bates Coaching v3.0</div>';
   document.getElementById('more-list').innerHTML=html;
 }
 function openCloudCheckins(){
@@ -1168,6 +1173,7 @@ function clientForm(c){
   var isNew=!c;
   return '<input type="hidden" id="cf-id" value="'+(c?c.id:'')+'"><h2>'+(isNew?'Add Client':'Edit Client')+'</h2>'
     +'<div class="admin-field"><label class="admin-label">Full Name *</label><input class="admin-input" id="cf-name" placeholder="e.g. John Smith" value="'+(c?c.name:'')+'"></div>'
+    +'<div class="admin-field"><label class="admin-label">Client PIN * <span style="font-weight:400;color:var(--muted);">(they enter this to log in)</span></label><input class="admin-input" id="cf-pin" type="text" inputmode="numeric" maxlength="6" placeholder="e.g. 1234" value="'+(c&&c.pin?c.pin:'')+'"></div>'
     +'<div class="admin-field"><label class="admin-label">Email</label><input class="admin-input" id="cf-email" type="email" placeholder="john@example.com" value="'+(c&&c.email?c.email:'')+'"></div>'
     +'<div class="admin-field"><label class="admin-label">Start Date</label><input class="admin-input" id="cf-start" type="date" value="'+(c&&c.startDate?c.startDate.split('T')[0]:'')+'"></div>'
     +'<div class="admin-field"><label class="admin-label">Status</label><select class="admin-input" id="cf-active"><option value="1" '+(!c||c.active?'selected':'')+'>Active</option><option value="0" '+(c&&!c.active?'selected':'')+'>Inactive</option></select></div>'
@@ -1227,14 +1233,16 @@ function saveClient(){
   flushProgramTextareas();
   var id=document.getElementById('cf-id').value||Date.now()+'';
   var name=document.getElementById('cf-name').value.trim();
+  var pin=document.getElementById('cf-pin').value.trim();
   if(!name){showToast('Name is required');return;}
+  if(!pin){showToast('PIN is required — clients use this to log in');return;}
   var idx=DB.clients.findIndex(function(c){return c.id===id;});
   var customProgram=TEMP_PROGRAM.map(function(day){
     var text=day.exerciseText!==undefined?day.exerciseText:(day.exercises||[]).join('\n');
     return {id:day.id,name:day.name||'Unnamed Day',emoji:day.emoji||'💪',exercises:text.split('\n').map(function(s){return s.trim();}).filter(Boolean)};
   });
   var client={
-    id:id,name:name,
+    id:id,name:name,pin:pin,
     email:document.getElementById('cf-email').value,
     startDate:document.getElementById('cf-start').value||new Date().toISOString().split('T')[0],
     active:document.getElementById('cf-active').value==='1',
@@ -1251,8 +1259,15 @@ function saveClient(){
   };
   if(idx>=0)DB.clients[idx]=client;
   else{DB.clients.push(client);if(!DB.activeClientId)DB.activeClientId=client.id;}
-  saveDB();closeModal();updateClientPill();
-  showToast(idx>=0?'Client updated':'Client added');
+  saveDB();
+  // Save to Firestore
+  db.collection('clients').doc(id).set(client).then(function(){
+    showToast(idx>=0?'Client updated & synced':'Client added & synced');
+  }).catch(function(err){
+    showToast(idx>=0?'Client updated (offline)':'Client added (offline)');
+    console.warn('Firestore save failed:',err.message);
+  });
+  closeModal();updateClientPill();
   openClientManager();
 }
 
@@ -1291,55 +1306,51 @@ function openCheckinReview(){
   openModal(html);
 }
 
-// ── COACH MODE ────────────────────────────────
-function switchToCoachMode(){
-  var pass=prompt('Enter coach password:');
-  if(pass===null)return;
-  if(pass==='ethan2024'||pass==='coach'){DB.isCoach=true;saveDB();renderMore();showToast('Coach mode on');}
-  else showToast('Incorrect password');
-}
-function switchToClientMode(){DB.isCoach=false;saveDB();renderMore();showToast('Switched to client view');}
+// ── SESSION & LOGIN ────────────────────────────
+var SESSION_KEY='ebc_session_v2';
+function getSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY))||null;}catch(e){return null;}}
+function setSession(s){localStorage.setItem(SESSION_KEY,JSON.stringify(s));}
+function clearSession(){localStorage.removeItem(SESSION_KEY);}
 
-// ── SETTINGS ──────────────────────────────────
-function openSettings(){
-  openModal('<h2>Settings</h2>'
-    +'<div class="admin-field"><label class="admin-label">Weight Unit</label><select class="admin-input" id="set-unit" onchange="DB.globalUnit=this.value;saveDB();"><option value="kg" '+(DB.globalUnit==='kg'?'selected':'')+'>Kilograms (kg)</option><option value="lbs" '+(DB.globalUnit==='lbs'?'selected':'')+'>Pounds (lbs)</option></select></div>'
-    +'<div class="admin-section-title">Data</div>'
-    +'<button class="submit-btn" style="background:var(--red);" onclick="if(confirm(\'Clear ALL data? This cannot be undone.\')){localStorage.removeItem(\'ebc_v2\');location.reload();}">Clear All Data</button>');
+function showLoginScreen(){
+  var el=document.getElementById('login-screen');
+  el.style.display='flex';
+  el.innerHTML='<div style="text-align:center;margin-bottom:36px;">'
+    +'<div style="font-size:28px;font-weight:800;letter-spacing:-0.5px;">Ethan Bates <span style="color:var(--accent);">Coaching</span></div>'
+    +'<div style="font-size:13px;color:var(--muted2);margin-top:6px;">Your personal coaching app</div>'
+    +'</div>'
+    +'<div style="width:100%;max-width:380px;">'
+    +'<div style="background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:14px;">'
+    +'<div style="font-size:17px;font-weight:700;margin-bottom:4px;">👋 I\'m a Client</div>'
+    +'<div style="font-size:13px;color:var(--muted2);margin-bottom:18px;">Enter your name and the PIN your coach gave you</div>'
+    +'<input class="admin-input" id="login-name" placeholder="Your full name" style="margin-bottom:10px;" autocomplete="name">'
+    +'<input class="admin-input" id="login-pin" placeholder="PIN (e.g. 1234)" type="password" inputmode="numeric" maxlength="6" style="margin-bottom:16px;" autocomplete="off">'
+    +'<button class="submit-btn" onclick="loginAsClient()">Log In →</button>'
+    +'</div>'
+    +'<div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:14px;">─────── or ───────</div>'
+    +'<button class="submit-btn" style="background:var(--s3);color:var(--muted2);border:1px solid var(--border);" onclick="promptCoachLogin()">🔐 Coach Login</button>'
+    +'</div>';
 }
 
-// ── MODAL & TOAST ─────────────────────────────
-function openModal(html){document.getElementById('modal-content').innerHTML=html;document.getElementById('modal-overlay').classList.add('open');}
-function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
-function closeModalOutside(e){if(e.target===document.getElementById('modal-overlay'))closeModal();}
-var toastTimer;
-function showToast(msg){
-  var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
-  clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show');},2500);
-}
+function hideLoginScreen(){document.getElementById('login-screen').style.display='none';}
 
-// ── BOOT ──────────────────────────────────────
-function boot(){
-  initHome();
-  renderWorkoutHome();
-  if(!DB.clients.length){
-    setTimeout(function(){
-      openModal('<h2>Welcome to Ethan Bates Coaching</h2>'
-        +'<p style="color:var(--muted2);font-size:14px;margin-bottom:16px;">To get started, log in as coach and add your first client.</p>'
-        +'<div style="background:var(--s3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8;color:var(--muted2);">'
-        +'<strong style="color:var(--text);">How it works:</strong><br>'
-        +'1. Tap <strong style="color:var(--text);">Coach Login</strong> below &rarr; enter your password<br>'
-        +'2. Go to <strong style="color:var(--text);">Manage Clients</strong> &rarr; Add New Client<br>'
-        +'3. Set their name, nutrition targets, and build their workout program<br>'
-        +'4. Share this HTML file with your client &mdash; they open it on their phone<br>'
-        +'5. They complete weekly check-ins and tap <strong style="color:var(--pink);">Save &amp; Email to Coach</strong><br>'
-        +'6. You receive their full check-in in your email inbox instantly'
-        +'</div>'
-        +'<button class="submit-btn" onclick="closeModal();showTab(\'more\');">Go to Coach Login &rarr;</button>');
-    },400);
-  }
-}
-boot();
-</script>
-</body>
-</html>
+function loginAsClient(){
+  var name=(document.getElementById('login-name').value||'').trim();
+  var pin=(document.getElementById('login-pin').value||'').trim();
+  if(!name||!pin){showToast('Enter your name and PIN');return;}
+  var btn=document.querySelector('#login-screen .submit-btn');
+  if(btn){btn.textContent='Logging in...';btn.disabled=true;}
+  db.collection('clients').where('pin','==',pin).get().then(function(snap){
+    if(snap.empty){showToast('PIN not recognised — check with your coach');if(btn){btn.textContent='Log In →';btn.disabled=false;}return;}
+    var found=null;
+    snap.forEach(function(doc){
+      var d=Object.assign({id:doc.id},doc.data());
+      var nameLower=name.toLowerCase();var clientLower=d.name.toLowerCase();
+      if(clientLower===nameLower||clientLower.startsWith(nameLower.split(' ')[0])||nameLower.startsWith(clientLower.split(' ')[0])){found=d;}
+    });
+    if(!found){showToast('Name doesn\'t match that PIN — check with your coach');if(btn){btn.textContent='Log In →';btn.disabled=false;}return;}
+    setSession({role:'client',clientId:found.id,clientName:found.name});
+    DB.clients=[found];DB.activeClientId=found.id;DB.isCoach=false;
+    loadClientWorkoutsFromFirestore(found.id,function(){
+      saveDB();hideLoginScreen();updateClientPill();initHome();renderWorkoutHome();
+      showToast('Welcome, '+found.name.split(' ')[0]+'!
