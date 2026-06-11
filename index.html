@@ -522,6 +522,7 @@ body{display:flex;flex-direction:column;}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
 // ── FIREBASE ───────────────────────────────────
 var firebaseConfig = {
@@ -1448,33 +1449,25 @@ function sendWelcomeEmail(clientId){
   var client=DB.clients.find(function(c){return c.id===clientId;});
   if(!client){showToast('Client not found');return;}
   if(!client.email){showToast('No email address saved for '+client.name);return;}
-  var url='https://ethan-bates-coaching.netlify.app';
-  var subject=encodeURIComponent('Your Ethan Bates Coaching App');
-  var body=encodeURIComponent(
-    'Hi '+client.name.split(' ')[0]+',\n\n'
-    +'Welcome to Ethan Bates Coaching! I\'ve set up your personal coaching app where you can view your program, log workouts, and submit your weekly check-ins.\n\n'
-    +'--- YOUR LOGIN DETAILS ---\n'
-    +'App: '+url+'\n'
-    +'Name: '+client.name+'\n'
-    +'PIN: '+client.pin+'\n\n'
-    +'--- HOW TO ADD TO YOUR HOME SCREEN ---\n\n'
-    +'iPhone (Safari):\n'
-    +'1. Open the link above in Safari\n'
-    +'2. Tap the Share icon (box with arrow) at the bottom\n'
-    +'3. Scroll down and tap "Add to Home Screen"\n'
-    +'4. Tap "Add" — the app icon will appear on your home screen\n\n'
-    +'Android (Chrome):\n'
-    +'1. Open the link above in Chrome\n'
-    +'2. Tap the 3-dot menu (top right)\n'
-    +'3. Tap "Add to Home screen"\n'
-    +'4. Tap "Add"\n\n'
-    +'Once added, open it like any other app — no App Store needed!\n\n'
-    +'Any questions, just message me.\n\n'
-    +'Ethan'
-  );
-  window.location.href='mailto:'+client.email+'?subject='+subject+'&body='+body;
+  showToast('Sending welcome email...');
+  emailjs.send(
+    'service_ldwp9li',
+    'jlmlun6',
+    {
+      to_email: client.email,
+      to_name: client.name.split(' ')[0],
+      client_name: client.name,
+      client_pin: client.pin,
+      app_url: 'https://ethan-bates-coaching.netlify.app'
+    },
+    'JVjRFBTBvNkW_9GOx'
+  ).then(function(){
+    showToast('Welcome email sent to '+client.name.split(' ')[0]+' ✅');
+  }).catch(function(err){
+    console.warn('EmailJS error:',err);
+    showToast('Failed to send email — check connection');
+  });
 }
-
 function boot(){
   var session=getSession();
   if(!session){showLoginScreen();return;}
