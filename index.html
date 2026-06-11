@@ -941,7 +941,7 @@ function submitWeeklyCheckin(){
     console.warn('Check-in cloud error:',err.message||err);
   });
   // Immediately show success — don't make client wait for server
-  showToast('Check-in sent to your coach! ✅');
+  var weekStr=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});openModal('<div style="text-align:center;padding:28px 16px"><div style="font-size:72px;margin-bottom:16px">✅</div><div style="font-size:24px;font-weight:800;margin-bottom:10px;color:var(--text)">Check-in Submitted!</div><div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:28px">Your weekly check-in for '+weekStr+'<br>has been sent to Ethan.<br>He will review it shortly. 💪</div><button onclick="closeModal()" style="width:100%;background:var(--accent);border:none;border-radius:12px;padding:14px;color:#000;font-weight:800;font-size:16px;cursor:pointer;">Done ✓</button></div>');
   initHome();
 }
 function updateClientPill(){
@@ -1776,7 +1776,7 @@ function sendWelcomeEmail(clientId){
       to_name: client.name.split(' ')[0],
       client_name: client.name,
       client_pin: client.pin,
-      app_url: 'https://ethan-bates-coaching.netlify.app'
+      app_url: 'https://ethanbatesy1999.github.io/ebc-app/'
     },
     'JVjRFBTBvNkW_9GOx'
   ).then(function(){
