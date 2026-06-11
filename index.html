@@ -1236,7 +1236,7 @@ function renderMore(){
   if(isCoach){
     html+='<div style="margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--accent);font-weight:700;">Coach Panel</div>';
     html+='<div class="more-item" onclick="openClientManager()"><div class="mi-icon" style="background:rgba(0,212,255,0.1);">'+svgIcon('users','var(--accent)')+'</div><div class="mi-text"><div class="mi-title">Manage Clients</div><div class="mi-desc">'+DB.clients.length+' client'+(DB.clients.length!==1?'s':'')+' -- add, edit, remove</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
-    html+='<div class="more-item" onclick="openCheckinReview()"><div class="mi-icon" style="background:rgba(255,60,142,0.1);">'+svgIcon('clipboard','var(--pink)')+'</div><div class="mi-text"><div class="mi-title">Review Check-ins</div><div class="mi-desc">View all client submissions</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
+    html+='<div class="more-item" onclick="openCloudCheckins()"><div class="mi-icon" style="background:rgba(255,60,142,0.1);">'+svgIcon('clipboard','var(--pink)')+'</div><div class="mi-text"><div class="mi-title">Review Check-ins</div><div class="mi-desc">View all client submissions</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
     html+='<div class="more-item" onclick="openCloudCheckins()"><div class="mi-icon" style="background:rgba(0,230,118,0.1);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--green)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg></div><div class="mi-text"><div class="mi-title">Live Cloud Check-ins</div><div class="mi-desc">All submissions from Firebase</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
     html+='<div style="margin:16px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);font-weight:700;">View</div>';
     html+='<div class="more-item" onclick="switchToClientMode()"><div class="mi-icon" style="background:rgba(123,94,167,0.15);">'+svgIcon('shuffle','#7b5ea7')+'</div><div class="mi-text"><div class="mi-title">Switch to Client View</div><div class="mi-desc">See the app as your client does</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
@@ -1439,7 +1439,11 @@ function deleteClient(id){
   DB.workouts=DB.workouts.filter(function(w){return w.clientId!==id;});
   DB.checkins=DB.checkins.filter(function(c){return c.clientId!==id;});
   if(DB.activeClientId===id)DB.activeClientId=DB.clients.length?DB.clients[0].id:null;
-  saveDB();closeModal();updateClientPill();showToast('Client deleted');
+  saveDB();
+  db.collection('clients').doc(id).delete().catch(function(e){console.warn('Firestore client delete failed:',e);});
+  db.collection('workouts').where('clientId','==',id).get().then(function(snap){snap.forEach(function(doc){doc.ref.delete();});}).catch(function(e){console.warn('Firestore workouts delete failed:',e);});
+  db.collection('checkins').where('clientId','==',id).get().then(function(snap){snap.forEach(function(doc){doc.ref.delete();});}).catch(function(e){console.warn('Firestore checkins delete failed:',e);});
+  closeModal();updateClientPill();showToast('Client deleted');
   openClientManager();
 }
 
