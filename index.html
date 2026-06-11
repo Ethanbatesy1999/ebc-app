@@ -1241,12 +1241,145 @@ function renderMore(){
     html+='<div style="margin:16px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);font-weight:700;">View</div>';
     html+='<div class="more-item" onclick="switchToClientMode()"><div class="mi-icon" style="background:rgba(123,94,167,0.15);">'+svgIcon('shuffle','#7b5ea7')+'</div><div class="mi-text"><div class="mi-title">Switch to Client View</div><div class="mi-desc">See the app as your client does</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
   }else{
-    html+='<div class="more-item" onclick="switchToCoachMode()"><div class="mi-icon" style="background:rgba(123,94,167,0.15);">'+svgIcon('shuffle','#7b5ea7')+'</div><div class="mi-text"><div class="mi-title">Coach Login</div><div class="mi-desc">Access the admin panel</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
+    var _mc=DB.clients.find(function(x){return x.id===DB.activeClientId;})||{};
+    html+='<div style="margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--accent);font-weight:700;">My Programme</div>';
+    html+='<div class="more-item" onclick="openMyCheckins()"><div class="mi-icon" style="background:rgba(255,60,142,0.1);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--pink)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div><div class="mi-text"><div class="mi-title">My Check-ins</div><div class="mi-desc">View your submitted weekly check-ins</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
+    html+='<div class="more-item" onclick="openMyGoals()"><div class="mi-icon" style="background:rgba(0,212,255,0.1);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--accent)"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="mi-text"><div class="mi-title">My Goals</div><div class="mi-desc">'+(_mc.goals?_mc.goals.slice(0,40)+(_mc.goals.length>40?'\u2026':''):'Set by your coach')+'</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
+    html+='<div class="more-item" onclick="openMySupplements()"><div class="mi-icon" style="background:rgba(0,230,118,0.1);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--green)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg></div><div class="mi-text"><div class="mi-title">Supplements</div><div class="mi-desc">Your daily supplement protocol</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
+    html+='<div class="more-item" onclick="openMyCardio()"><div class="mi-icon" style="background:rgba(255,145,0,0.1);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--orange)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><div class="mi-text"><div class="mi-title">Cardio Plan</div><div class="mi-desc">Your cardio prescription from coach</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
+    html+='<div style="margin:16px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);font-weight:700;">Progress</div>';
+    html+='<div class="more-item" onclick="openProgressPhotos()"><div class="mi-icon" style="background:rgba(123,94,167,0.15);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#7b5ea7"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div><div class="mi-text"><div class="mi-title">Progress & Photos</div><div class="mi-desc">Track your transformation</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
+    html+='<div class="more-item" onclick="openExerciseLibraryBrowser()"><div class="mi-icon" style="background:rgba(255,23,68,0.1);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--red)"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div><div class="mi-text"><div class="mi-title">Exercise Videos</div><div class="mi-desc">How-to tutorials for every exercise</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
   }
   html+='<div class="more-item" onclick="openSettings()"><div class="mi-icon" style="background:rgba(255,145,0,0.1);">'+svgIcon('settings','var(--orange)')+'</div><div class="mi-text"><div class="mi-title">Settings</div><div class="mi-desc">Units, data</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
-  html+='<div class="more-item" onclick="logout()" style="margin-top:8px;"><div class="mi-icon" style="background:rgba(255,23,68,0.1);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--red)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></div><div class="mi-text"><div class="mi-title" style="color:var(--red);">Log Out</div><div class="mi-desc">Switch account or client</div></div></div>';
+  html+='<div class="more-item" onclick="logout()" style="margin-top:8px;"><div class="mi-icon" style="background:rgba(255,23,68,0.1);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--red)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></div><div class="mi-text"><div class="mi-title" style="color:var(--red);">Log Out</div><div class="mi-desc">Sign out of the app</div></div></div>';
   html+='<div style="text-align:center;margin-top:24px;color:var(--muted);font-size:12px;">Ethan Bates Coaching v3.0</div>';
   document.getElementById('more-list').innerHTML=html;
+}
+function openMyCheckins(){
+  var clientId=DB.activeClientId;
+  openModal('<h2 style="margin-bottom:16px;">My Check-ins</h2><div id="my-checkin-list"><div style="color:var(--muted);font-size:14px;text-align:center;padding:24px;">Loading...</div></div>');
+  db.collection('checkins').where('clientId','==',clientId).orderBy('submittedAt','desc').limit(20).get().then(function(snap){
+    if(snap.empty){document.getElementById('my-checkin-list').innerHTML='<div style="color:var(--muted);font-size:14px;text-align:center;padding:24px;">No check-ins submitted yet.</div>';return;}
+    var h='';
+    snap.forEach(function(doc){
+      var d=doc.data();
+      var dt=d.date?new Date(d.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'Unknown date';
+      h+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">'
+        +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600;">'+dt+'</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">'
+        +(d.trainingAdherence?'<div style="background:var(--s3);border-radius:8px;padding:8px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Training</div><div style="font-weight:700;color:var(--accent);margin-top:2px;">'+d.trainingAdherence+'</div></div>':'')
+        +(d.nutritionAdherence?'<div style="background:var(--s3);border-radius:8px;padding:8px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Nutrition</div><div style="font-weight:700;color:var(--green);margin-top:2px;">'+d.nutritionAdherence+'</div></div>':'')
+        +(d.sleep?'<div style="background:var(--s3);border-radius:8px;padding:8px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Sleep</div><div style="font-weight:700;margin-top:2px;">'+d.sleep+'/10</div></div>':'')
+        +(d.stress?'<div style="background:var(--s3);border-radius:8px;padding:8px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Stress</div><div style="font-weight:700;margin-top:2px;">'+d.stress+'/10</div></div>':'')
+        +(d.avgWeight?'<div style="background:var(--s3);border-radius:8px;padding:8px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Avg Weight</div><div style="font-weight:700;margin-top:2px;">'+d.avgWeight+'kg</div></div>':'')
+        +(d.cardio?'<div style="background:var(--s3);border-radius:8px;padding:8px;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Cardio</div><div style="font-weight:700;margin-top:2px;">'+d.cardio+' min</div></div>':'')
+        +'</div>'
+        +(d.win?'<div style="margin-top:10px;font-size:13px;"><span style="color:var(--green);font-weight:700;">Win: </span>'+d.win+'</div>':'')
+        +(d.challenge?'<div style="margin-top:6px;font-size:13px;"><span style="color:var(--orange);font-weight:700;">Challenge: </span>'+d.challenge+'</div>':'')
+        +(d.anythingElse?'<div style="margin-top:6px;font-size:13px;color:var(--muted2);">'+d.anythingElse+'</div>':'')
+        +'</div>';
+    });
+    document.getElementById('my-checkin-list').innerHTML=h;
+  }).catch(function(){document.getElementById('my-checkin-list').innerHTML='<div style="color:var(--muted);text-align:center;padding:24px;">Could not load check-ins.</div>';});
+}
+function openMyGoals(){
+  var c=DB.clients.find(function(x){return x.id===DB.activeClientId;})||{};
+  var html='<h2 style="margin-bottom:16px;">🎯 My Goals</h2>';
+  if(c.goals){html+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:18px;font-size:15px;line-height:1.7;color:var(--text);">'+c.goals.replace(/\n/g,'<br>')+'</div>';}
+  else{html+='<div style="color:var(--muted);text-align:center;padding:24px;font-size:14px;">Your coach hasn't set your goals yet.</div>';}
+  html+='<button onclick="closeModal()" style="width:100%;margin-top:16px;background:var(--s3);border:1px solid var(--border);border-radius:12px;padding:13px;color:var(--muted2);font-size:14px;cursor:pointer;">Close</button>';
+  openModal(html);
+}
+function openMySupplements(){
+  var c=DB.clients.find(function(x){return x.id===DB.activeClientId;})||{};
+  var html='<h2 style="margin-bottom:16px;">💊 Supplements</h2>';
+  if(c.supplements){
+    var lines=c.supplements.split('\n').filter(function(l){return l.trim();});
+    html+='<div style="display:flex;flex-direction:column;gap:10px;">';
+    lines.forEach(function(line){html+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;"><div style="width:36px;height:36px;background:rgba(0,230,118,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">💊</div><div style="font-size:14px;color:var(--text);">'+line.trim()+'</div></div>';});
+    html+='</div>';
+  }else{html+='<div style="color:var(--muted);text-align:center;padding:24px;font-size:14px;">No supplement protocol set yet.</div>';}
+  html+='<button onclick="closeModal()" style="width:100%;margin-top:16px;background:var(--s3);border:1px solid var(--border);border-radius:12px;padding:13px;color:var(--muted2);font-size:14px;cursor:pointer;">Close</button>';
+  openModal(html);
+}
+function openMyCardio(){
+  var c=DB.clients.find(function(x){return x.id===DB.activeClientId;})||{};
+  var html='<h2 style="margin-bottom:16px;">⚡ Cardio Plan</h2>';
+  if(c.cardioTarget){html+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:18px;font-size:15px;line-height:1.7;color:var(--text);">'+c.cardioTarget.replace(/\n/g,'<br>')+'</div>';}
+  else{html+='<div style="color:var(--muted);text-align:center;padding:24px;font-size:14px;">No cardio plan set yet.</div>';}
+  html+='<button onclick="closeModal()" style="width:100%;margin-top:16px;background:var(--s3);border:1px solid var(--border);border-radius:12px;padding:13px;color:var(--muted2);font-size:14px;cursor:pointer;">Close</button>';
+  openModal(html);
+}
+function openProgressPhotos(){
+  var clientId=DB.activeClientId;
+  var html='<h2 style="margin-bottom:16px;">📸 Progress & Photos</h2>'
+    +'<div style="background:var(--s2);border:2px dashed var(--border);border-radius:14px;padding:20px;text-align:center;margin-bottom:16px;cursor:pointer;" onclick="document.getElementById('prog-photo-input').click()">'
+    +'<div style="font-size:32px;margin-bottom:8px;">📷</div><div style="font-size:14px;font-weight:600;margin-bottom:4px;">Add Progress Photo</div>'
+    +'<div style="font-size:12px;color:var(--muted);">Tap to choose a photo from your library</div>'
+    +'<input type="file" id="prog-photo-input" accept="image/*" style="display:none;" onchange="handleProgressPhotoUpload(this)">'
+    +'</div><div id="prog-photo-list"><div style="color:var(--muted);font-size:14px;text-align:center;padding:16px;">Loading photos...</div></div>';
+  openModal(html);
+  db.collection('progressPhotos').where('clientId','==',clientId).orderBy('date','desc').limit(20).get().then(function(snap){
+    if(snap.empty){document.getElementById('prog-photo-list').innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px;">No photos yet — add your first progress photo above!</div>';return;}
+    var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+    snap.forEach(function(doc){var d=doc.data();var dt=new Date(d.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});h+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;overflow:hidden;"><img src="'+d.dataUrl+'" style="width:100%;aspect-ratio:3/4;object-fit:cover;display:block;"><div style="padding:8px;font-size:11px;color:var(--muted);">'+dt+(d.note?'<br><span style="color:var(--text);">'+d.note+'</span>':'')+'</div></div>';});
+    h+='</div>';
+    document.getElementById('prog-photo-list').innerHTML=h;
+  }).catch(function(){document.getElementById('prog-photo-list').innerHTML='<div style="color:var(--muted);text-align:center;font-size:13px;padding:12px;">Could not load photos.</div>';});
+}
+function handleProgressPhotoUpload(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var canvas=document.createElement('canvas');var MAX=800;var w=img.width,h=img.height;
+      if(w>h){if(w>MAX){h=h*(MAX/w);w=MAX;}}else{if(h>MAX){w=w*(MAX/h);h=MAX;}}
+      canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);
+      var dataUrl=canvas.toDataURL('image/jpeg',0.75);
+      var note=prompt('Add a note (optional, e.g. "Week 4 front")','');
+      var entry={clientId:DB.activeClientId,date:new Date().toISOString(),dataUrl:dataUrl,note:note||''};
+      document.getElementById('prog-photo-list').innerHTML='<div style="color:var(--muted);text-align:center;padding:16px;">Saving...</div>';
+      db.collection('progressPhotos').add(entry).then(function(){showToast('Photo saved! ✅');openProgressPhotos();}).catch(function(e){showToast('Save failed');console.warn(e);});
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function openExerciseLibraryBrowser(){
+  var cats=[];
+  if(typeof EX_LIB!=='undefined')EX_LIB.forEach(function(e){if(cats.indexOf(e.c)<0)cats.push(e.c);});
+  var html='<h2 style="margin-bottom:12px;">▶ Exercise Library</h2>'
+    +'<input id="ex-lib-search" class="admin-input" placeholder="Search exercises..." oninput="renderExLibList()" style="margin-bottom:12px;">'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;" id="ex-lib-cats">'
+    +'<button class="ex-btn" onclick="filterExLibCat('')" style="font-size:12px;background:var(--accent);color:#000;">All</button>'
+    +cats.map(function(c){return '<button class="ex-btn" onclick="filterExLibCat(''+c+'')" style="font-size:12px;">'+c+'</button>';}).join('')
+    +'</div><div id="ex-lib-list"></div>';
+  openModal(html);window._exLibCat='';renderExLibList();
+}
+function renderExLibList(){
+  var search=(document.getElementById('ex-lib-search')||{}).value||'';
+  var cat=window._exLibCat||'';
+  var pool=typeof EX_LIB!=='undefined'?EX_LIB:[];
+  var filtered=pool.filter(function(e){return(!cat||e.c===cat)&&(!search||e.n.toLowerCase().indexOf(search.toLowerCase())>=0||e.m.toLowerCase().indexOf(search.toLowerCase())>=0);});
+  if(!filtered.length){document.getElementById('ex-lib-list').innerHTML='<div style="color:var(--muted);text-align:center;padding:16px;">No exercises found.</div>';return;}
+  var h='';
+  filtered.slice(0,40).forEach(function(e){
+    var ytUrl='https://www.youtube.com/results?search_query='+encodeURIComponent(e.q);
+    h+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
+      +'<div><div style="font-size:14px;font-weight:700;">'+e.n+'</div><div style="font-size:11px;color:var(--accent);margin-top:2px;">'+e.c+' · '+e.m+'</div></div>'
+      +'<a href="'+ytUrl+'" target="_blank" rel="noopener" style="flex-shrink:0;background:#ff0000;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;">&#9658; Watch</a>'
+      +'</div><div style="font-size:13px;color:var(--muted2);line-height:1.5;">'+e.d+'</div></div>';
+  });
+  if(filtered.length>40)h+='<div style="text-align:center;color:var(--muted);font-size:12px;padding:8px;">Showing 40 of '+filtered.length+' — use search to narrow down</div>';
+  document.getElementById('ex-lib-list').innerHTML=h;
+}
+function filterExLibCat(cat){
+  window._exLibCat=cat;
+  document.querySelectorAll('#ex-lib-cats .ex-btn').forEach(function(btn){btn.style.background=btn.textContent.trim()===(cat||'All')?'var(--accent)':'var(--s3)';btn.style.color=btn.textContent.trim()===(cat||'All')?'#000':'var(--muted2)';});
+  renderExLibList();
 }
 function openCloudCheckins(){
   openModal('<h2>☁️ Live Cloud Check-ins</h2><div id="cloud-checkin-list"><div style="color:var(--muted);font-size:14px;text-align:center;padding:24px;">Loading from Firebase...</div></div>');
@@ -1337,6 +1470,9 @@ function clientForm(c){
     +'<div class="admin-field"><label class="admin-label">Fats (g)</label><input class="admin-input" id="cf-fat" type="number" placeholder="70" value="'+(c&&c.nutrition?c.nutrition.fat:'')+'"></div>'
     +'</div>'
     +'<div class="admin-field"><label class="admin-label">Nutrition Notes (shown to client)</label><textarea class="admin-input" id="cf-notes" rows="3" style="resize:none;" placeholder="e.g. Hit protein every day. Higher carbs on training days.">'+(c&&c.nutritionNotes?c.nutritionNotes:'')+'</textarea></div>'
+    +'<div class="admin-field"><label class="admin-label">Goals (shown to client)</label><textarea class="admin-input" id="cf-goals" rows="2" style="resize:none;" placeholder="e.g. Lose 10kg, build visible abs by summer.">'+(c&&c.goals?c.goals:'')+' </textarea></div>'
+    +'<div class="admin-field"><label class="admin-label">Supplements (shown to client)</label><textarea class="admin-input" id="cf-supps" rows="2" style="resize:none;" placeholder="e.g. Creatine 5g daily, Whey protein post-workout.">'+(c&&c.supplements?c.supplements:'')+' </textarea></div>'
+    +'<div class="admin-field"><label class="admin-label">Cardio Plan (shown to client)</label><textarea class="admin-input" id="cf-cardio-plan" rows="2" style="resize:none;" placeholder="e.g. 3x per week, 30 mins steady-state.">'+(c&&c.cardioTarget?c.cardioTarget:'')+' </textarea></div>'
     +'<div class="admin-section-title">Training Program Builder</div>'
     +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Add training days and list exercises for each day (one per line).</div>'
     +'<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;color:var(--muted2);">Copy from Ethan\'s templates:</span>'
@@ -1407,6 +1543,9 @@ function saveClient(){
       fat:parseInt(document.getElementById('cf-fat').value)||70
     },
     nutritionNotes:document.getElementById('cf-notes').value,
+    goals:document.getElementById('cf-goals').value,
+    supplements:document.getElementById('cf-supps').value,
+    cardioTarget:document.getElementById('cf-cardio-plan').value,
     color:idx>=0?DB.clients[idx].color:CLIENT_COLORS[DB.clients.length%CLIENT_COLORS.length]
   };
   if(idx>=0)DB.clients[idx]=client;
