@@ -445,8 +445,7 @@ body{display:flex;flex-direction:column;}
         </div>
       </div>
       <div style="padding:0 14px 20px;display:flex;flex-direction:column;gap:10px;">
-        <button class="submit-btn pink" onclick="submitWeeklyCheckin(true)">📧 Save &amp; Email to Coach</button>
-        <button class="submit-btn" style="background:var(--s3);color:var(--muted2);border:1px solid var(--border);" onclick="submitWeeklyCheckin(false)">Save locally only</button>
+        <button class="submit-btn pink" onclick="submitWeeklyCheckin()">📋 Submit Check-in to Coach</button>
       </div>
     </div>
   </div>
@@ -880,7 +879,7 @@ function previewPhotos(input){
   });
 }
 
-function submitWeeklyCheckin(sendEmail){
+function submitWeeklyCheckin(){
   var c=getActiveClient();
   if(!c){showToast('No active client');return;}
   var m={
@@ -911,9 +910,10 @@ function submitWeeklyCheckin(sendEmail){
     helpDetail:document.getElementById('wk-help-detail').value,
     anythingElse:document.getElementById('wk-anything-else').value
   };
-  DB.checkins.push(entry);saveDB();initHome();
   saveCheckinToCloud(entry, c.name);
-  if(sendEmail){
+  showToast('Check-in submitted! Your coach will review it soon. ✅');
+  initHome();
+  if(false){
     var lines=[
       'WEEKLY CHECK-IN - '+c.name,
       'Date: '+new Date(entry.date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
