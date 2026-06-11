@@ -1353,4 +1353,113 @@ function loginAsClient(){
     DB.clients=[found];DB.activeClientId=found.id;DB.isCoach=false;
     loadClientWorkoutsFromFirestore(found.id,function(){
       saveDB();hideLoginScreen();updateClientPill();initHome();renderWorkoutHome();
-      showToast('Welcome, '+found.name.split(' ')[0]+'!
+      showToast('Welcome, '+found.name.split(' ')[0]+'! 👋');
+    });
+  }).catch(function(err){
+    showToast('Connection error — check internet and try again');
+    if(btn){btn.textContent='Log In →';btn.disabled=false;}
+    console.warn(err);
+  });
+}
+
+function promptCoachLogin(){
+  var pass=prompt('Enter coach password:');
+  if(pass===null)return;
+  if(pass!=='ethan2024'&&pass!=='coach'){showToast('Incorrect password');return;}
+  setSession({role:'coach'});DB.isCoach=true;
+  loadAllClientsFromFirestore(function(){
+    saveDB();hideLoginScreen();updateClientPill();initHome();renderWorkoutHome();renderMore();
+    showToast('Coach mode — welcome Ethan! 👋');
+  });
+}
+
+function loadAllClientsFromFirestore(cb){
+  db.collection('clients').get().then(function(snap){
+    DB.clients=[];
+    snap.forEach(function(doc){DB.clients.push(Object.assign({id:doc.id},doc.data()));});
+    if(DB.clients.length&&!DB.activeClientId)DB.activeClientId=DB.clients[0].id;
+    if(cb)cb();
+  }).catch(function(err){console.warn('Failed to load clients:',err);if(cb)cb();});
+}
+
+function loadClientWorkoutsFromFirestore(clientId,cb){
+  db.collection('workouts').where('clientId','==',clientId).get().then(function(snap){
+    DB.workouts=DB.workouts.filter(function(w){return w.clientId!==clientId;});
+    snap.forEach(function(doc){DB.workouts.push(Object.assign({firestoreId:doc.id},doc.data()));});
+    db.collection('checkins').where('clientId','==',clientId).get().then(function(csnap){
+      DB.checkins=DB.checkins.filter(function(c){return c.clientId!==clientId;});
+      csnap.forEach(function(doc){DB.checkins.push(Object.assign({firestoreId:doc.id},doc.data()));});
+      if(cb)cb();
+    }).catch(function(){if(cb)cb();});
+  }).catch(function(err){console.warn('Failed to load workouts:',err.message);if(cb)cb();});
+}
+
+function logout(){
+  if(!confirm('Log out?'))return;
+  clearSession();DB=defaultDB();saveDB();
+  showLoginScreen();showTab('home');
+}
+
+// ── COACH MODE (legacy helpers) ────────────────
+function switchToCoachMode(){promptCoachLogin();}
+function switchToClientMode(){DB.isCoach=false;saveDB();renderMore();showToast('Switched to client view');}
+
+// ── SETTINGS ──────────────────────────────────
+function openSettings(){
+  openModal('<h2>Settings</h2>'
+    +'<div class="admin-field"><label class="admin-label">Weight Unit</label><select class="admin-input" id="set-unit" onchange="DB.globalUnit=this.value;saveDB();"><option value="kg" '+(DB.globalUnit==='kg'?'selected':'')+'>Kilograms (kg)</option><option value="lbs" '+(DB.globalUnit==='lbs'?'selected':'')+'>Pounds (lbs)</option></select></div>'
+    +'<div class="admin-section-title">Data</div>'
+    +'<button class="submit-btn" style="background:var(--red);" onclick="if(confirm(\'Clear ALL data? This cannot be undone.\')){\'ebc_v2\';location.reload();}">Clear All Data</button>');
+}
+
+// ── MODAL & TOAST ─────────────────────────────
+function openModal(html){
+  var m=document.getElementById('modal-overlay');
+  document.getElementById('modal-body').innerHTML=html;
+  m.style.display='flex';
+  setTimeout(function(){m.classList.add('visible');},10);
+}
+function closeModal(){
+  var m=document.getElementById('modal-overlay');
+  m.classList.remove('visible');
+  setTimeout(function(){m.style.display='none';},300);
+}
+var _toastTimer;
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('visible');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(function(){t.classList.remove('visible');},2800);
+}
+
+// ── BOOT ──────────────────────────────────────
+function boot(){
+  var session=getSession();
+  if(!session){showLoginScreen();return;}
+  if(session.role==='coach'){
+    DB.isCoach=true;
+    loadAllClientsFromFirestore(function(){
+      saveDB();updateClientPill();initHome();renderWorkoutHome();
+    });
+  } else {
+    DB.isCoach=false;
+    var clientId=session.clientId;
+    db.collection('clients').doc(clientId).get().then(function(doc){
+      if(!doc.exists){clearSession();showLoginScreen();return;}
+      var client=Object.assign({id:doc.id},doc.data());
+      DB.clients=[client];DB.activeClientId=clientId;
+      loadClientWorkoutsFromFirestore(clientId,function(){
+        saveDB();updateClientPill();initHome();renderWorkoutHome();
+        showToast('Welcome back, '+client.name.split(' ')[0]+'! \u{1F44B}');
+      });
+    }).catch(function(err){
+      console.warn('Firestore unavailable:',err.message);
+      if(DB.clients.length){updateClientPill();initHome();renderWorkoutHome();}
+      else{clearSession();showLoginScreen();}
+    });
+  }
+}
+boot();
+</script>
+</body>
+</html>
