@@ -1384,7 +1384,7 @@ function openCloudCheckins(){
         +'<div style="font-size:15px;font-weight:700;">'+d.clientName+'</div>'
         +'<div style="display:flex;gap:8px;align-items:center;">'
         +'<div style="font-size:11px;color:var(--muted);">'+dt+'</div>'
-        +'<button onclick="deleteCheckin(''+id+'')" style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:3px 10px;font-size:11px;cursor:pointer;">🗑 Delete</button>'
+        +'<butto+'<button onclick="deleteCheckin(this.dataset.id)" data-id="'+id+'" style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:3px 10px;font-size:11px;cursor:pointer;">🗑 Delete</button>'
         +'</div></div>'
         +'<div style="font-size:13px;color:var(--muted2);line-height:2;margin-bottom:8px;">'
         +(d.trainingAdherence?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">🏋️ '+d.trainingAdherence+'</span>':'')
@@ -1394,7 +1394,7 @@ function openCloudCheckins(){
         +(d.avgWeight?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">⚖️ '+d.avgWeight+'kg</span>':'')
         +(steps?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">👟 '+steps+' steps/day</span>':'')
         +'</div>'
-        +'<button onclick="toggleCheckinDetail('ci-'+id+'')" style="background:var(--s3);color:var(--muted2);border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;width:100%;margin-bottom:0;">▼ View Full Check-in</button>'
+        +'<button onclick="toggleCheckinDetail(this.dataset.id)" data-id="ci-'+id+'" style="background:var(--s3);color:var(--muted2);border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;width:100%;margin-bottom:0;">▼ View Full Check-in</button>'
         +'<div id="ci-'+id+'" style="display:none;margin-top:12px;font-size:13px;color:var(--text);line-height:1.9;border-top:1px solid var(--border);padding-top:10px;">'
         +(d.cardio?'<div><b>Cardio this week:</b> '+d.cardio+' mins</div>':'')
         +(d.whyMissed?'<div><b>Why missed:</b> '+d.whyMissed+'</div>':'')
