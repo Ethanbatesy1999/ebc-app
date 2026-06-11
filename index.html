@@ -1415,7 +1415,7 @@ function openSettings(){
 // ── MODAL & TOAST ─────────────────────────────
 function openModal(html){
   var m=document.getElementById('modal-overlay');
-  document.getElementById('modal-body').innerHTML=html;
+  document.getElementById('modal-content').innerHTML=html;
   m.style.display='flex';
   setTimeout(function(){m.classList.add('visible');},10);
 }
@@ -1439,7 +1439,7 @@ function boot(){
   if(session.role==='coach'){
     DB.isCoach=true;
     loadAllClientsFromFirestore(function(){
-      saveDB();updateClientPill();initHome();renderWorkoutHome();
+      saveDB();hideLoginScreen();updateClientPill();initHome();renderWorkoutHome();
     });
   } else {
     DB.isCoach=false;
@@ -1449,17 +1449,10 @@ function boot(){
       var client=Object.assign({id:doc.id},doc.data());
       DB.clients=[client];DB.activeClientId=clientId;
       loadClientWorkoutsFromFirestore(clientId,function(){
-        saveDB();updateClientPill();initHome();renderWorkoutHome();
+        saveDB();hideLoginScreen();updateClientPill();initHome();renderWorkoutHome();
         showToast('Welcome back, '+client.name.split(' ')[0]+'! \u{1F44B}');
       });
     }).catch(function(err){
       console.warn('Firestore unavailable:',err.message);
-      if(DB.clients.length){updateClientPill();initHome();renderWorkoutHome();}
-      else{clearSession();showLoginScreen();}
-    });
-  }
-}
-boot();
-</script>
-</body>
-</html>
+      if(DB.clients.length){hideLoginScreen();updateClientPill();initHome();renderWorkoutHome();}
+      else{clearSession();showLoginS
