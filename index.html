@@ -801,7 +801,7 @@ function showTab(tab){
 function initHome(){
   var h=new Date().getHours();
   var c=getActiveClient();
-  var name=c?c.name.split(' ')[0]:'there';
+  var name=DB.isCoach?'Ethan':(c?c.name.split(' ')[0]:'there');
   document.getElementById('home-greeting').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+' '+name+' 👋';
   document.getElementById('home-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   updateClientPill();
@@ -932,6 +932,7 @@ function submitWeeklyCheckin(){
     helpType:entry.helpType||'',
     helpDetail:entry.helpDetail||'',
     anythingElse:entry.anythingElse||'',
+    avgDailySteps:parseInt(m.steps)||null,
     submittedAt:firebase.firestore.FieldValue.serverTimestamp()
   }).then(function(ref){
     console.log('Check-in saved to cloud:',ref.id);
@@ -945,7 +946,7 @@ function submitWeeklyCheckin(){
 }
 function updateClientPill(){
   var c=getActiveClient();
-  document.getElementById('client-name-pill').textContent=c?c.name.split(' ')[0]:'No client';
+  document.getElementById('client-name-pill').textContent=DB.isCoach?'Coach ✓':(c?c.name.split(' ')[0]:'No client');
 }
 
 function showClientSwitcher(){
@@ -1366,7 +1367,7 @@ function filterExLibCat(cat){
   renderExLibList();
 }
 function openCloudCheckins(){
-  openModal('<h2>☁️ Live Cloud Check-ins</h2><div id="cloud-checkin-list"><div style="color:var(--muted);font-size:14px;text-align:center;padding:24px;">Loading from Firebase...</div></div>');
+  openModal('<h2>📋 Client Check-ins</h2><div id="cloud-checkin-list"><div style="color:var(--muted);font-size:14px;text-align:center;padding:24px;">Loading from Firebase...</div></div>');
   db.collection('checkins').orderBy('submittedAt','desc').limit(50).get().then(function(snap){
     if(snap.empty){
       document.getElementById('cloud-checkin-list').innerHTML='<div style="color:var(--muted);font-size:14px;text-align:center;padding:24px;">No check-ins yet. Once a client submits their weekly check-in it will appear here.</div>';
@@ -1374,24 +1375,46 @@ function openCloudCheckins(){
     }
     var html='';
     snap.forEach(function(doc){
-      var d=doc.data();
+      var d=doc.data(),id=doc.id;
+      var m=d.measurements||{};
       var dt=d.date?new Date(d.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'Unknown date';
-      html+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">'
+      var steps=d.avgDailySteps||m.steps||'';
+      html+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
         +'<div style="font-size:15px;font-weight:700;">'+d.clientName+'</div>'
+        +'<div style="display:flex;gap:8px;align-items:center;">'
         +'<div style="font-size:11px;color:var(--muted);">'+dt+'</div>'
+        +'<button onclick="deleteCheckin(''+id+'')" style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:3px 10px;font-size:11px;cursor:pointer;">🗑 Delete</button>'
+        +'</div></div>'
+        +'<div style="font-size:13px;color:var(--muted2);line-height:2;margin-bottom:8px;">'
+        +(d.trainingAdherence?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">🏋️ '+d.trainingAdherence+'</span>':'')
+        +(d.nutritionAdherence?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">🥗 '+d.nutritionAdherence+'</span>':'')
+        +(d.sleep?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">😴 Sleep '+d.sleep+'/10</span>':'')
+        +(d.stress?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">😰 Stress '+d.stress+'/10</span>':'')
+        +(d.avgWeight?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">⚖️ '+d.avgWeight+'kg</span>':'')
+        +(steps?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">👟 '+steps+' steps/day</span>':'')
         +'</div>'
-        +'<div style="font-size:13px;color:var(--muted2);line-height:2;">'
-        +(d.trainingAdherence?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">🏋️ Training: '+d.trainingAdherence+'</span>':'')
-        +(d.nutritionAdherence?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">🥗 Nutrition: '+d.nutritionAdherence+'</span>':'')
-        +(d.sleep?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">😴 Sleep: '+d.sleep+'/10</span>':'')
-        +(d.stress?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">😰 Stress: '+d.stress+'/10</span>':'')
-        +(d.avgWeight?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">⚖️ Weight: '+d.avgWeight+'kg</span>':'')
-        +'</div>'
-        +(d.win?'<div style="margin-top:8px;font-size:12px;"><span style="color:var(--green);">✅ Win:</span> <span style="color:var(--text);">'+d.win+'</span></div>':'')
-        +(d.challenge?'<div style="margin-top:4px;font-size:12px;"><span style="color:var(--orange);">⚠️ Challenge:</span> <span style="color:var(--text);">'+d.challenge+'</span></div>':'')
-        +(d.anythingElse?'<div style="margin-top:4px;font-size:12px;"><span style="color:var(--muted2);">💬 Note:</span> <span style="color:var(--text);">'+d.anythingElse+'</span></div>':'')
-        +'</div>';
+        +'<button onclick="toggleCheckinDetail('ci-'+id+'')" style="background:var(--s3);color:var(--muted2);border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;width:100%;margin-bottom:0;">▼ View Full Check-in</button>'
+        +'<div id="ci-'+id+'" style="display:none;margin-top:12px;font-size:13px;color:var(--text);line-height:1.9;border-top:1px solid var(--border);padding-top:10px;">'
+        +(d.cardio?'<div><b>Cardio this week:</b> '+d.cardio+' mins</div>':'')
+        +(d.whyMissed?'<div><b>Why missed:</b> '+d.whyMissed+'</div>':'')
+        +(d.overall?'<div><b>Overall feeling:</b> '+d.overall+'</div>':'')
+        +'<div style="margin-top:8px;font-weight:700;color:var(--accent);">📏 Measurements (cm)</div>'
+        +(m.waistAbove?'<div>Waist above belly button: <b>'+m.waistAbove+'</b></div>':'')
+        +(m.waistAt?'<div>Waist at belly button: <b>'+m.waistAt+'</b></div>':'')
+        +(m.waistBelow?'<div>Waist below belly button: <b>'+m.waistBelow+'</b></div>':'')
+        +(m.arm?'<div>Arm: <b>'+m.arm+'</b></div>':'')
+        +(m.thigh?'<div>Thigh: <b>'+m.thigh+'</b></div>':'')
+        +(steps?'<div>Daily steps (avg): <b>'+steps+'</b></div>':'')
+        +(d.win?'<div style="margin-top:8px;"><span style="color:var(--green);">✅ Win:</span> '+d.win+'</div>':'')
+        +(d.challenge?'<div><span style="color:var(--orange);">⚠️ Challenge:</span> '+d.challenge+'</div>':'')
+        +(d.overcome?'<div><span style="color:var(--muted2);">Plan:</span> '+d.overcome+'</div>':'')
+        +(d.foodDiff?'<div style="margin-top:8px;">Food difficulty: <b>'+d.foodDiff+'</b></div>':'')
+        +(d.cardioDiff?'<div>Cardio difficulty: <b>'+d.cardioDiff+'</b></div>':'')
+        +((d.helpType&&d.helpType!=='none'&&d.helpType!=='No, I\'m good!')?'<div style="margin-top:8px;"><span style="color:var(--accent);">💬 Needs help:</span> '+d.helpType+'</div>':'')
+        +(d.helpDetail?'<div>Details: '+d.helpDetail+'</div>':'')
+        +(d.anythingElse?'<div style="margin-top:4px;"><span style="color:var(--muted2);">Note:</span> '+d.anythingElse+'</div>':'')
+        +'</div></div>';
     });
     document.getElementById('cloud-checkin-list').innerHTML=html;
   }).catch(function(err){
@@ -1399,6 +1422,23 @@ function openCloudCheckins(){
   });
 }
 
+function toggleCheckinDetail(id){
+  var el=document.getElementById(id);
+  if(!el)return;
+  var btn=el.previousElementSibling;
+  if(el.style.display==='none'){el.style.display='block';if(btn)btn.textContent='▲ Hide Details';}
+  else{el.style.display='none';if(btn)btn.textContent='▼ View Full Check-in';}
+}
+
+function deleteCheckin(docId){
+  if(!confirm('Delete this check-in? This cannot be undone.'))return;
+  db.collection('checkins').doc(docId).delete().then(function(){
+    showToast('Check-in deleted ✅');
+    openCloudCheckins();
+  }).catch(function(err){
+    showToast('Delete failed: '+err.message);
+  });
+}
 function svgIcon(name,color){
   var icons={
     users:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="'+color+'"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
