@@ -881,7 +881,9 @@ function previewPhotos(input){
 
 function submitWeeklyCheckin(){
   var c=getActiveClient();
-  if(!c){showToast('No active client');return;}
+  if(!c){showToast('No active client — please log in again');return;}
+  var btn=document.querySelector('.submit-btn.pink');
+  if(btn){btn.disabled=true;btn.textContent='Submitting...';}
   var m={
     waistAbove:document.getElementById('m-waist-above').value,
     waistAt:document.getElementById('m-waist-at').value,
@@ -897,8 +899,8 @@ function submitWeeklyCheckin(){
     nutritionAdherence:document.getElementById('wk-nutrition-adherence').value,
     cardio:document.getElementById('wk-cardio').value,
     avgWeight:parseFloat(document.getElementById('wk-avg-weight').value)||null,
-    sleep:parseInt(document.getElementById('wk-sleep').value),
-    stress:parseInt(document.getElementById('wk-stress').value),
+    sleep:parseInt(document.getElementById('wk-sleep').value)||null,
+    stress:parseInt(document.getElementById('wk-stress').value)||null,
     overall:document.getElementById('wk-overall').value,
     measurements:m,
     win:document.getElementById('wk-win').value,
@@ -910,56 +912,37 @@ function submitWeeklyCheckin(){
     helpDetail:document.getElementById('wk-help-detail').value,
     anythingElse:document.getElementById('wk-anything-else').value
   };
-  saveCheckinToCloud(entry, c.name);
-  showToast('Check-in submitted! Your coach will review it soon. ✅');
-  initHome();
-  if(false){
-    var lines=[
-      'WEEKLY CHECK-IN - '+c.name,
-      'Date: '+new Date(entry.date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
-      '',
-      '--- ADHERENCE ---',
-      'Training: '+(entry.trainingAdherence||'Not answered'),
-      entry.whyMissed?'Why missed: '+entry.whyMissed:'',
-      'Nutrition: '+(entry.nutritionAdherence||'Not answered'),
-      'Cardio this week: '+(entry.cardio||'0')+' mins',
-      '',
-      '--- WELLBEING ---',
-      'Avg daily weight: '+(entry.avgWeight||'--')+' kg',
-      'Sleep quality: '+entry.sleep+'/10',
-      'Stress level: '+entry.stress+'/10',
-      'Overall feeling: '+(entry.overall||'--'),
-      '',
-      '--- MEASUREMENTS (cm) ---',
-      'Waist above belly button: '+(m.waistAbove||'--'),
-      'Waist at belly button: '+(m.waistAt||'--'),
-      'Waist below belly button: '+(m.waistBelow||'--'),
-      'Arm: '+(m.arm||'--'),
-      'Thigh: '+(m.thigh||'--'),
-      'Steps (avg): '+(m.steps||'--'),
-      '',
-      '--- WINS & CHALLENGES ---',
-      'Biggest win: '+(entry.win||'--'),
-      'Biggest challenge: '+(entry.challenge||'--'),
-      'Plan to overcome: '+(entry.overcome||'--'),
-      '',
-      '--- DIFFICULTY RATINGS ---',
-      'Food adherence difficulty: '+(entry.foodDiff||'--'),
-      'Cardio adherence difficulty: '+(entry.cardioDiff||'--'),
-      '',
-      '--- MESSAGE TO COACH ---',
-      'Need help with: '+(entry.helpType||'--'),
-      entry.helpDetail?'Details: '+entry.helpDetail:'',
-      'Anything else: '+(entry.anythingElse||'--')
-    ].filter(function(l){return l!==null&&l!==undefined;}).join('\n');
-    var subj=encodeURIComponent('Weekly Check-in - '+c.name+' - '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
-    window.location.href='mailto:batesethan715@gmail.com?subject='+subj+'&body='+encodeURIComponent(lines);
-    showToast('Saved & email opened');
-  }else{
-    showToast('Check-in saved locally');
-  }
+  db.collection('checkins').add({
+    clientId:entry.clientId,
+    clientName:c.name||'Unknown',
+    date:entry.date,
+    trainingAdherence:entry.trainingAdherence||'',
+    whyMissed:entry.whyMissed||'',
+    nutritionAdherence:entry.nutritionAdherence||'',
+    cardio:entry.cardio||'',
+    avgWeight:entry.avgWeight||null,
+    sleep:entry.sleep||null,
+    stress:entry.stress||null,
+    overall:entry.overall||'',
+    measurements:entry.measurements||{},
+    win:entry.win||'',
+    challenge:entry.challenge||'',
+    overcome:entry.overcome||'',
+    foodDiff:entry.foodDiff||'',
+    cardioDiff:entry.cardioDiff||'',
+    helpType:entry.helpType||'',
+    helpDetail:entry.helpDetail||'',
+    anythingElse:entry.anythingElse||'',
+    submittedAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    showToast('Check-in sent to your coach! ✅');
+    initHome();
+  }).catch(function(err){
+    if(btn){btn.disabled=false;btn.textContent='📋 Submit Check-in to Coach';}
+    showToast('Failed to send — check connection and try again');
+    console.warn('Check-in save error:',err.message||err);
+  });
 }
-
 function updateClientPill(){
   var c=getActiveClient();
   document.getElementById('client-name-pill').textContent=c?c.name.split(' ')[0]:'No client';
