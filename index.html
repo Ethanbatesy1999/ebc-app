@@ -1354,8 +1354,8 @@ function openExerciseLibraryBrowser(){
   var html='<h2 style="margin-bottom:12px;">▶ Exercise Library</h2>'
     +'<input id="ex-lib-search" class="admin-input" placeholder="Search exercises..." oninput="renderExLibList()" style="margin-bottom:12px;">'
     +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;" id="ex-lib-cats">'
-    +'<button class="ex-btn" onclick="filterExLibCat('')" style="font-size:12px;background:var(--accent);color:#000;">All</button>'
-    +cats.map(function(c){return '<button class="ex-btn" onclick="filterExLibCat(''+c+'')" style="font-size:12px;">'+c+'</button>';}).join('')
+    +'<button class="ex-btn" onclick="filterExLibCat()" style="font-size:12px;background:var(--accent);color:#000;">All</button>'
+    +cats.map(function(c){return '<button class="ex-btn" data-cat="'+c+'" onclick="filterExLibCat(this.dataset.cat)" style="font-size:12px;">'+c+'</button>';}).join('')
     +'</div><div id="ex-lib-list"></div>';
   openModal(html);window._exLibCat='';renderExLibList();
 }
