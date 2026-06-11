@@ -604,6 +604,156 @@ function getClientProgram(){
   if(c&&c.customProgram&&c.customProgram.length)return c.customProgram;
   return Object.entries(DEFAULT_PROGRAMS).map(function(e){return {id:e[0],name:e[1].name,emoji:e[1].emoji,exercises:e[1].exercises};});
 }
+
+// ── EXERCISE LIBRARY ─────────────────────────────────────────────────
+
+// ── EXERCISE LIBRARY ─────────────────────────────────────────────────
+var EX_LIB=[
+{n:'Barbell Bench Press',c:'Chest',m:'Chest · Triceps · Front Delts',d:'Lie flat on bench with feet planted. Grip bar just wider than shoulders, lower to mid-chest with control, then press explosively back up. Keep shoulder blades pinched and maintain a slight arch.',q:'barbell bench press proper form'},
+{n:'Incline Barbell Bench Press',c:'Chest',m:'Upper Chest · Triceps · Front Delts',d:'Set bench to 30-45 degrees. Grip bar just outside shoulder-width and lower to your upper chest. Press back up and squeeze the chest at the top.',q:'incline barbell bench press form tutorial'},
+{n:'Decline Barbell Bench Press',c:'Chest',m:'Lower Chest · Triceps',d:'Secure feet and lie on decline bench. Lower bar to your lower chest then press back up, keeping elbows at 75 degrees to your torso.',q:'decline bench press form tutorial'},
+{n:'Dumbbell Bench Press',c:'Chest',m:'Chest · Triceps · Front Delts',d:'Lie flat holding dumbbells at chest level, palms forward. Press both up and slightly inward, then lower with control to a full stretch.',q:'dumbbell bench press form tutorial'},
+{n:'Incline Dumbbell Press',c:'Chest',m:'Upper Chest · Triceps · Front Delts',d:'Set bench to 30-45 degree incline. Press dumbbells from shoulder level up and together, squeezing upper chest. Lower slowly to the start.',q:'incline dumbbell press form tutorial'},
+{n:'Dumbbell Flye',c:'Chest',m:'Chest',d:'Lie flat with dumbbells above chest, elbows slightly bent. Open arms in a wide arc until you feel a stretch in your chest, then bring them back together.',q:'dumbbell flye proper form tutorial'},
+{n:'Cable Crossover',c:'Chest',m:'Chest',d:'Stand between two high pulleys. Pull handles together in a wide arc, crossing them slightly at centre. Squeeze the chest hard at the peak of the movement.',q:'cable crossover chest fly form tutorial'},
+{n:'Cable Fly',c:'Chest',m:'Chest',d:'Set cables to chest height. Pull handles together in a hugging motion, keeping a slight bend in your elbows. Squeeze your chest hard at the midpoint.',q:'cable fly chest form tutorial'},
+{n:'Chest Dips',c:'Chest',m:'Lower Chest · Triceps · Front Delts',d:'Grip parallel bars and lean slightly forward. Lower until shoulders are below your elbows, then press back up through your chest.',q:'chest dips proper form tutorial'},
+{n:'Push-Up',c:'Chest',m:'Chest · Triceps · Front Delts',d:'Hands just wider than shoulder-width, body straight from head to heels. Lower your chest to the floor then press back up, keeping core tight throughout.',q:'push up proper form tutorial'},
+{n:'Pec Deck Machine',c:'Chest',m:'Chest',d:'Sit in the machine with handles at chest height. Bring arms together in front of you, squeezing the pecs at the peak, then release slowly.',q:'pec deck machine form tutorial'},
+{n:'Machine Chest Press',c:'Chest',m:'Chest · Triceps · Front Delts',d:'Adjust seat so handles are at chest height. Press forward until arms are nearly straight, then return slowly without letting the weight stack touch.',q:'chest press machine form tutorial'},
+{n:'Flat Chest Press',c:'Chest',m:'Chest · Triceps · Front Delts',d:'Press the handles from chest height forward until arms are extended, then return slowly. Keep your back pressed into the pad and avoid shrugging your shoulders.',q:'chest press machine form tutorial'},
+{n:'Conventional Deadlift',c:'Back',m:'Entire Back · Glutes · Hamstrings',d:'Stand with mid-foot under bar. Hinge at hips and bend knees to grip bar, keeping a neutral spine. Drive through the floor to stand, squeezing glutes at the top.',q:'conventional deadlift proper form tutorial'},
+{n:'Barbell Bent-Over Row',c:'Back',m:'Lats · Mid-Back · Rear Delts · Biceps',d:'Hinge forward about 45 degrees with a flat back. Pull the bar into your lower chest, driving elbows back and squeezing your shoulder blades together.',q:'barbell bent over row form tutorial'},
+{n:'Pull-Up',c:'Back',m:'Lats · Biceps · Mid-Back',d:'Hang with overhand grip wider than shoulder-width. Pull yourself up until chin clears the bar by driving elbows down toward your hips. Lower fully each rep.',q:'pull up proper form tutorial'},
+{n:'Chin-Up',c:'Back',m:'Lats · Biceps',d:'Hang with underhand grip at shoulder-width. Pull yourself up until chin clears the bar, focusing on driving elbows down rather than pulling with your hands.',q:'chin up proper form tutorial'},
+{n:'Wide Grip Lat Pulldown',c:'Back',m:'Lats · Rear Delts · Biceps',d:'Grip the bar wide with an overhand grip. Pull it down to your upper chest, leading with your elbows. Squeeze your lats at the bottom and return slowly.',q:'lat pulldown proper form tutorial'},
+{n:'Seated Cable Row',c:'Back',m:'Mid-Back · Lats · Biceps',d:'Sit upright and grip the handle. Pull it into your lower abdomen by driving your elbows back, squeezing shoulder blades together. Return with a slight forward lean.',q:'seated cable row form tutorial'},
+{n:'Single Arm Dumbbell Row',c:'Back',m:'Lats · Mid-Back · Rear Delts',d:'Brace one knee and hand on a bench. Pull the dumbbell from a dead hang up to your hip, driving your elbow back. Keep your torso flat and avoid rotating.',q:'single arm dumbbell row form tutorial'},
+{n:'T-Bar Row',c:'Back',m:'Mid-Back · Lats · Rear Delts',d:'Straddle the bar and hinge forward to about 45 degrees. Pull the bar into your lower chest by driving your elbows back. Squeeze the mid-back hard at the top.',q:'t bar row form tutorial'},
+{n:'Chest Supported Incline Row',c:'Back',m:'Mid-Back · Rear Delts · Biceps',d:'Lie chest-down on an incline bench holding dumbbells. Row both up by driving elbows back and squeezing shoulder blades together at the top.',q:'chest supported incline row form tutorial'},
+{n:'Face Pull',c:'Back',m:'Rear Delts · Rotator Cuff · Mid-Back',d:'Set cable at forehead height with a rope. Pull the rope toward your face with elbows high, rotating your hands out at the end. Keep upper arms parallel to the floor.',q:'face pull proper form tutorial'},
+{n:'Straight Arm Cable Pulldown',c:'Back',m:'Lats',d:'Stand at a high cable with arms extended. Keeping a slight elbow bend, pull the cable down in an arc to your thighs, squeezing lats hard at the bottom.',q:'straight arm lat pulldown form tutorial'},
+{n:'Trap Bar Deadlift',c:'Back',m:'Back · Glutes · Quads · Hamstrings',d:'Stand inside the trap bar, hinge down and grip the handles. Drive through the floor to stand tall, keeping the weight close and spine neutral.',q:'trap bar deadlift form tutorial'},
+{n:'Cable Low Seated Row',c:'Back',m:'Lats · Mid-Back · Biceps',d:'Sit upright at a low cable pulley. Pull the handle into your abdomen by retracting your shoulder blades, keeping your torso upright.',q:'low row cable form tutorial'},
+{n:'Standing Lat Cable Pullover',c:'Back',m:'Lats',d:'Stand facing a high cable. With arms slightly bent, pull the cable down in a wide arc to your hips, keeping tension on the lats throughout. Return slowly.',q:'cable pullover lat form tutorial'},
+{n:'Pendlay Row',c:'Back',m:'Mid-Back · Lats · Rear Delts',d:'Start each rep with the bar on the floor. Hinge to horizontal, then explosively row the bar into your lower chest. Lower it back to the ground each rep.',q:'pendlay row form tutorial'},
+{n:'Barbell Overhead Press',c:'Shoulders',m:'Front Delts · Mid Delts · Triceps',d:'Hold bar at shoulder height just outside shoulders. Brace core and press overhead until arms lock out. Lower under control to collar bones.',q:'barbell overhead press form tutorial'},
+{n:'Dumbbell Shoulder Press',c:'Shoulders',m:'Front Delts · Mid Delts · Triceps',d:'Sit on an upright bench with dumbbells at shoulder level. Press both overhead until nearly touching, then lower slowly back to the start.',q:'dumbbell shoulder press form tutorial'},
+{n:'Machine Shoulder Press',c:'Shoulders',m:'Front Delts · Mid Delts · Triceps',d:'Adjust seat so handles align with your shoulders. Press upward until arms are fully extended, then lower with control.',q:'machine shoulder press form tutorial'},
+{n:'Lateral Raise',c:'Shoulders',m:'Mid Delts',d:'Hold dumbbells at sides with a slight elbow bend. Raise both arms out to the side until level with your shoulders, leading with your elbows. Lower slowly.',q:'lateral raise proper form tutorial'},
+{n:'Lateral Raise Machine',c:'Shoulders',m:'Mid Delts',d:'Sit in the machine with arms against the pads. Raise both arms to the sides until parallel to the floor. Lower slowly and avoid using momentum.',q:'lateral raise machine form tutorial'},
+{n:'Cable Lateral Raise',c:'Shoulders',m:'Mid Delts',d:'Stand beside a low cable with the handle in the far hand. Raise the cable out to the side in a controlled arc to shoulder height, keeping a slight elbow bend.',q:'cable lateral raise form tutorial'},
+{n:'Lying Cable Lateral Raise',c:'Shoulders',m:'Mid Delts',d:'Lie on a bench beside a low cable. Raise the cable handle out to the side in a controlled arc to shoulder height, keeping a slight elbow bend throughout.',q:'lying cable lateral raise form tutorial'},
+{n:'Front Raise',c:'Shoulders',m:'Front Delts',d:'Hold dumbbells in front of thighs. Raise both arms forward to shoulder height with a slight bend in your elbows, then lower slowly. Avoid swinging.',q:'front raise dumbbell form tutorial'},
+{n:'Rear Delt Fly',c:'Shoulders',m:'Rear Delts · Mid-Back',d:'Hinge forward to near horizontal or use a chest-supported bench. Raise dumbbells out to sides in an arc, leading with elbows. Squeeze rear delts at the top.',q:'rear delt fly dumbbell form tutorial'},
+{n:'Cable Rear Delt Fly',c:'Shoulders',m:'Rear Delts · Mid-Back',d:'Set cables to shoulder height and cross arms to grab opposite handles. Pull both handles apart in a reverse fly motion, squeezing rear delts at the peak.',q:'cable rear delt fly form tutorial'},
+{n:'Arnold Press',c:'Shoulders',m:'Front Delts · Mid Delts · Rear Delts',d:'Start with dumbbells at chin height, palms facing you. As you press up, rotate palms outward so they face forward at the top. Reverse on the way down.',q:'arnold press form tutorial'},
+{n:'Barbell Shrug',c:'Shoulders',m:'Traps',d:'Hold a barbell with an overhand grip. Shrug shoulders straight up toward your ears, hold briefly, then lower with control. Avoid rolling the shoulders.',q:'barbell shrug form tutorial'},
+{n:'Dumbbell Shrug',c:'Shoulders',m:'Traps',d:'Hold dumbbells at your sides. Elevate shoulders straight up toward your ears, hold for a second, then lower slowly. Keep the movement vertical, no shoulder rolls.',q:'dumbbell shrug form tutorial'},
+{n:'Upright Row',c:'Shoulders',m:'Mid Delts · Traps',d:'Grip a barbell with hands shoulder-width apart. Pull it straight up to chin level with elbows flaring out to the sides. Lower under control.',q:'upright row form tutorial'},
+{n:'Push Press',c:'Shoulders',m:'Front Delts · Triceps · Legs',d:'Dip slightly at the knees and drive the bar overhead by extending your legs and pressing simultaneously. Brace hard at the top and lower with control.',q:'push press barbell form tutorial'},
+{n:'Barbell Curl',c:'Biceps',m:'Biceps · Brachialis',d:'Stand holding a barbell with an underhand grip. Curl the bar up by flexing your elbows, keeping upper arms still. Squeeze at the top and lower slowly to a full stretch.',q:'barbell curl proper form tutorial'},
+{n:'Dumbbell Curl',c:'Biceps',m:'Biceps · Brachialis',d:'Hold dumbbells at sides with palms forward. Curl up to shoulder level keeping upper arms stationary. Lower slowly. Can be done alternating or simultaneous.',q:'dumbbell curl proper form tutorial'},
+{n:'Hammer Curl',c:'Biceps',m:'Brachialis · Brachioradialis · Biceps',d:'Hold dumbbells in a neutral grip (thumbs up). Curl to shoulder height without rotating your wrists. Lower slowly. Great for building arm thickness.',q:'hammer curl proper form tutorial'},
+{n:'Cable Hammer Curl',c:'Biceps',m:'Brachialis · Brachioradialis',d:'Attach a rope to a low cable. Grip the rope in a neutral grip and curl toward your shoulders, splitting the rope at the top. Lower with control.',q:'cable hammer curl form tutorial'},
+{n:'Incline Dumbbell Curl',c:'Biceps',m:'Biceps (long head)',d:'Lie back on a 45-60 degree incline bench. Let arms hang straight down, then curl to shoulder height. The bottom stretch maximises long-head bicep recruitment.',q:'incline dumbbell curl form tutorial'},
+{n:'Preacher Curl',c:'Biceps',m:'Biceps (short head)',d:'Rest upper arms on the preacher pad with palms up. Curl the bar or dumbbells up to chin level, hold briefly, then lower slowly all the way to a full stretch.',q:'preacher curl form tutorial'},
+{n:'Barbell Preacher Curl',c:'Biceps',m:'Biceps (short head)',d:'Rest upper arms on the preacher pad with an underhand grip on the bar. Curl to chin height, squeeze, then lower to a full stretch. Avoid letting the weight drop.',q:'barbell preacher curl form tutorial'},
+{n:'EZ Bar Bicep Curl',c:'Biceps',m:'Biceps · Brachialis',d:'Grip the angled sections of the EZ bar with an underhand grip. Curl to shoulder level, squeezing at the top, then lower slowly to a full stretch.',q:'ez bar curl proper form tutorial'},
+{n:'Cable Curl',c:'Biceps',m:'Biceps',d:'Stand at a low cable with a bar or handle. Curl the cable up to shoulder level, keeping upper arms vertical. Squeeze at the top and lower slowly.',q:'cable curl bicep form tutorial'},
+{n:'Concentration Curl',c:'Biceps',m:'Biceps (peak)',d:'Sit on a bench and rest your working arm against your inner thigh. Curl the dumbbell up to shoulder height in a slow controlled movement, then lower fully.',q:'concentration curl form tutorial'},
+{n:'Reverse Curl',c:'Biceps',m:'Brachioradialis · Brachialis',d:'Grip a bar with an overhand grip. Curl the weight up to shoulder height, keeping wrists straight and upper arms still.',q:'reverse curl barbell form tutorial'},
+{n:'Zottman Curl',c:'Biceps',m:'Biceps · Brachialis · Brachioradialis',d:'Curl dumbbells up with palms facing up, then rotate to palms-down at the top. Lower slowly in this overhand position. Rotate back to underhand at the bottom.',q:'zottman curl form tutorial'},
+{n:'Spider Curl',c:'Biceps',m:'Biceps (short head)',d:'Lie chest-down on an incline bench. Let arms hang straight down and curl the dumbbells up toward your shoulders. Lower slowly to a full stretch.',q:'spider curl bicep form tutorial'},
+{n:'Close-Grip Bench Press',c:'Triceps',m:'Triceps · Chest · Front Delts',d:'Lie on a flat bench and grip the bar shoulder-width apart. Lower to your lower chest keeping elbows close to your torso, then press back up.',q:'close grip bench press form tutorial'},
+{n:'Tricep Pushdown',c:'Triceps',m:'Triceps',d:'Stand at a high cable with a bar or rope. Keeping upper arms fixed at your sides, push the handle down until elbows are fully extended. Return slowly.',q:'tricep pushdown cable form tutorial'},
+{n:'Cable Rope Overhead Tricep Extension',c:'Triceps',m:'Triceps (long head)',d:'Face away from a low cable holding the rope overhead. Press the rope forward until arms are fully extended, keeping elbows close to your head. Return slowly.',q:'overhead cable tricep extension rope form'},
+{n:'Skull Crusher',c:'Triceps',m:'Triceps',d:'Lie on a bench holding an EZ bar above your chest. Keeping upper arms vertical, bend only at the elbows to lower the weight toward your forehead, then extend back up.',q:'skull crusher ez bar form tutorial'},
+{n:'Overhead Tricep Extension',c:'Triceps',m:'Triceps (long head)',d:'Hold a dumbbell or EZ bar overhead with arms extended. Keeping elbows close to your head, bend at the elbows to lower the weight behind your head, then press back up.',q:'overhead tricep extension dumbbell form'},
+{n:'Tricep Dips',c:'Triceps',m:'Triceps · Chest · Front Delts',d:'Grip parallel bars with your body upright. Lower by bending elbows to 90 degrees, then press back up. Keep torso vertical to maximise tricep engagement.',q:'tricep dips proper form tutorial'},
+{n:'Seated Dips',c:'Triceps',m:'Triceps',d:'Place hands on a bench behind you with feet out in front. Lower your hips toward the floor by bending your elbows, then push back up to straight arms.',q:'seated dips bench triceps form tutorial'},
+{n:'Tricep Kickback',c:'Triceps',m:'Triceps',d:'Hinge forward with one hand on a bench for support. Drive your elbow back so your upper arm is parallel to the floor, then extend your arm fully straight back.',q:'tricep kickback dumbbell form tutorial'},
+{n:'Diamond Push-Up',c:'Triceps',m:'Triceps · Chest',d:'Place hands together under your chest forming a diamond shape. Lower your chest toward your hands with elbows close to your body, then press back up.',q:'diamond push up triceps form tutorial'},
+{n:'JM Press',c:'Triceps',m:'Triceps',d:'Lie on a bench with a barbell at lockout. Lower the bar toward your chin by bending elbows out slightly, creating a hybrid between a skull crusher and close-grip press.',q:'jm press tricep form tutorial'},
+{n:'Barbell Back Squat',c:'Legs',m:'Quads · Glutes · Hamstrings · Core',d:'Bar across upper back, feet shoulder-width, toes slightly out. Break at hips and knees simultaneously, keeping chest up and knees tracking over toes. Drive back up through your heels.',q:'barbell back squat proper form tutorial'},
+{n:'Front Squat',c:'Legs',m:'Quads · Glutes · Core',d:'Hold the bar in a front rack on your shoulders. Squat with a very upright torso until thighs are parallel or below, keeping elbows high throughout.',q:'front squat proper form tutorial'},
+{n:'Hack Squat',c:'Legs',m:'Quads · Glutes',d:'Position yourself on the machine with back on the pad, feet shoulder-width on the platform. Lower the sled until knees reach 90 degrees or deeper, then drive back up.',q:'hack squat machine form tutorial'},
+{n:'Leg Press',c:'Legs',m:'Quads · Glutes · Hamstrings',d:'Place feet shoulder-width on the platform. Lower the sled until knees reach 90 degrees, keeping lower back pressed into the seat. Press back up without locking out.',q:'leg press form tutorial proper'},
+{n:'Bulgarian Split Squat',c:'Legs',m:'Quads · Glutes',d:'Elevate your rear foot on a bench. Lower your back knee toward the floor keeping front shin vertical, then drive back up through your front heel.',q:'bulgarian split squat form tutorial'},
+{n:'Lunges',c:'Legs',m:'Quads · Glutes · Hamstrings',d:'Step forward and lower your back knee toward the floor, keeping front shin vertical and torso upright. Push off your front foot to return to standing.',q:'lunges proper form tutorial'},
+{n:'Dumbbell Walking Lunges',c:'Legs',m:'Quads · Glutes · Hamstrings',d:'Hold dumbbells at sides and step forward into a lunge. Lower your back knee toward the floor, then bring your back foot forward into the next step, walking continuously.',q:'walking lunges dumbbell form tutorial'},
+{n:'Goblet Squat',c:'Legs',m:'Quads · Glutes · Core',d:'Hold a dumbbell or kettlebell at your chest. Squat deep with elbows inside your knees, chest up and core braced. Drive back up through your heels.',q:'goblet squat form tutorial'},
+{n:'Step-Up',c:'Legs',m:'Quads · Glutes',d:'Stand in front of a box or bench holding dumbbells. Step up with one foot, drive through your heel to bring the other foot up, then step back down with control.',q:'step up exercise dumbbell form tutorial'},
+{n:'Leg Extension',c:'Legs',m:'Quads',d:'Sit in the machine with feet under the pad. Extend both legs until straight, squeezing quads hard at the top, then lower slowly. Avoid jerking the weight.',q:'leg extension machine form tutorial'},
+{n:'Romanian Deadlift',c:'Legs',m:'Hamstrings · Glutes · Lower Back',d:'Hold a barbell at hip level. Push hips back while lowering the bar down your legs, maintaining a flat back and soft knees. Drive hips forward to stand, squeezing glutes at the top.',q:'romanian deadlift rdl form tutorial'},
+{n:'Lying Hamstring Curl',c:'Legs',m:'Hamstrings',d:'Lie face-down on the machine with the pad just above your heels. Curl both legs up toward your glutes, squeeze hamstrings at the top, then lower slowly.',q:'lying hamstring curl machine form tutorial'},
+{n:'Seated Leg Curl',c:'Legs',m:'Hamstrings',d:'Sit in the machine with the pad on your lower legs. Pull legs down and back under the seat by flexing the knee, squeeze hard at full flex, then return slowly.',q:'seated leg curl machine form tutorial'},
+{n:'Good Morning',c:'Legs',m:'Hamstrings · Lower Back · Glutes',d:'Place a bar across your upper back. Hinge at the hips with soft knees, lowering torso toward horizontal with a flat back. Drive hips forward to return.',q:'good morning barbell form tutorial'},
+{n:'Glute Bridge',c:'Legs',m:'Glutes · Hamstrings',d:'Lie on your back with feet flat, hip-width apart. Drive your hips up by squeezing glutes until your body forms a straight line from shoulders to knees. Hold briefly and lower.',q:'glute bridge form tutorial'},
+{n:'Hip Thrust',c:'Legs',m:'Glutes · Hamstrings',d:'Rest upper back on a bench with a barbell over your hips. Drive hips upward by squeezing glutes, achieving a straight line from shoulders to knees, then lower.',q:'hip thrust barbell form tutorial'},
+{n:'Hip Thrust Machine',c:'Legs',m:'Glutes · Hamstrings',d:'Position yourself with the pad over your hips. Drive hips forward until fully extended, squeezing glutes hard at the top, then lower under control.',q:'hip thrust machine form tutorial'},
+{n:'Glute Kickback',c:'Legs',m:'Glutes',d:'On hands and knees or using a cable, kick one leg back and up, extending the hip fully and squeezing the glute at the top. Lower with control and repeat.',q:'glute kickback cable machine form tutorial'},
+{n:'Hip Abductor Machine',c:'Legs',m:'Glutes (abductors)',d:'Sit in the machine with legs against the outside of the pads. Push both legs outward against the resistance as far as comfortable, then bring back together slowly.',q:'hip abductor machine form tutorial'},
+{n:'Hip Adductor Machine',c:'Legs',m:'Inner Thighs (adductors)',d:'Sit in the machine with legs on the inside of the pads. Squeeze both legs together against the resistance, hold briefly at full closure, then release slowly.',q:'hip adductor machine form tutorial'},
+{n:'Sumo Deadlift',c:'Legs',m:'Glutes · Inner Thighs · Hamstrings · Back',d:'Stand in a wide stance with toes pointed outward and grip the bar inside your legs. Drive through the floor to stand, keeping chest up and knees tracking over toes.',q:'sumo deadlift form tutorial'},
+{n:'Nordic Curl',c:'Legs',m:'Hamstrings',d:'Anchor your feet and start kneeling. Lower your body toward the floor as slowly as possible, resisting with your hamstrings only. Push up with your hands to reset each rep.',q:'nordic hamstring curl form tutorial'},
+{n:'Standing Calf Raise',c:'Calves',m:'Gastrocnemius · Soleus',d:'Stand on a platform with heels off the edge. Rise onto tiptoes as high as possible, pause at the top, then lower heels well below the platform for a full stretch.',q:'standing calf raise form tutorial'},
+{n:'Seated Calf Raise',c:'Calves',m:'Soleus',d:'Sit with the pad on your knees and balls of your feet on the platform. Press up onto tiptoes as high as possible, then lower heels for a full stretch.',q:'seated calf raise form tutorial'},
+{n:'Donkey Calf Raise',c:'Calves',m:'Gastrocnemius',d:'Hinge forward and rest forearms on a pad, balls of feet on a platform. Raise heels as high as possible, pause, then lower fully for maximum stretch.',q:'donkey calf raise form tutorial'},
+{n:'Plank',c:'Core',m:'Core · Shoulders · Glutes',d:'Hold a push-up position on your forearms or hands, keeping your body in a perfectly straight line. Brace your core, squeeze glutes, and breathe steadily.',q:'plank proper form tutorial core'},
+{n:'Side Plank',c:'Core',m:'Obliques · Core',d:'Lie on your side and prop yourself on one forearm with feet stacked. Lift hips to form a straight line from head to feet. Hold without letting your hips sag.',q:'side plank proper form tutorial'},
+{n:'Crunch',c:'Core',m:'Abs (rectus abdominis)',d:'Lie on back with knees bent. Place hands lightly behind your head. Curl shoulders off the floor by contracting your abs, not pulling on your neck. Lower slowly.',q:'crunch ab form tutorial proper'},
+{n:'Reverse Crunch',c:'Core',m:'Abs (lower)',d:'Lie on back with knees at 90 degrees. Draw knees toward your chest by tilting your pelvis, then lower with control. Keep the movement small and controlled - no momentum.',q:'reverse crunch form tutorial abs'},
+{n:'Cable Crunch',c:'Core',m:'Abs (rectus abdominis)',d:'Kneel at a high cable with the rope behind your head. Crunch elbows toward your knees by contracting your abs, rounding your spine. Return slowly to the starting position.',q:'cable crunch ab form tutorial'},
+{n:'Hanging Leg Raise',c:'Core',m:'Abs (lower) · Hip Flexors',d:'Hang from a pull-up bar and raise your legs to at least 90 degrees by tilting your pelvis - avoid just flexing your hips. Lower slowly and avoid swinging.',q:'hanging leg raise form tutorial abs'},
+{n:'Ab Wheel Rollout',c:'Core',m:'Entire Core',d:'Kneel behind an ab wheel and roll it forward until your torso is nearly parallel to the floor. Use your abs to pull the wheel back, keeping hips down and lower back neutral.',q:'ab wheel rollout form tutorial'},
+{n:'Russian Twist',c:'Core',m:'Obliques',d:'Sit on the floor, lean back about 45 degrees with feet raised, and rotate a weight from side to side. Keep the movement in your torso, not just your arms.',q:'russian twist form tutorial core'},
+{n:'Bicycle Crunch',c:'Core',m:'Obliques · Abs',d:'Lie on back and alternate touching elbow to opposite knee in a pedalling motion. Fully extend the non-working leg and rotate from your core, not your neck.',q:'bicycle crunch form tutorial abs'},
+{n:'Mountain Climber',c:'Core',m:'Core · Shoulders · Hip Flexors',d:'Hold a push-up position and drive one knee at a time toward your chest in an alternating motion. Keep hips level and core braced throughout.',q:'mountain climbers form tutorial core'},
+{n:'V-Up',c:'Core',m:'Abs · Hip Flexors',d:'Lie flat and simultaneously raise your legs and torso to form a V shape, reaching hands toward feet. Lower both back to the floor with control.',q:'v up exercise form tutorial abs'},
+{n:'Dead Bug',c:'Core',m:'Deep Core · Transverse Abdominis',d:'Lie on back with arms up and knees at 90 degrees. Slowly lower opposite arm and leg toward the floor while pressing lower back into the ground. Alternate sides.',q:'dead bug exercise core form tutorial'},
+{n:'Dragon Flag',c:'Core',m:'Entire Core · Lats',d:'Lie on a bench gripping behind your head. Raise your entire body to vertical keeping it rigid, then lower slowly - only your shoulders stay on the bench.',q:'dragon flag exercise form tutorial'},
+{n:'Kettlebell Swing',c:'Cardio',m:'Glutes · Hamstrings · Core · Shoulders',d:'Hinge at the hips holding a kettlebell. Swing it back between your legs then drive hips forward explosively to swing it to shoulder height. Power comes from hips, not arms.',q:'kettlebell swing proper form tutorial'},
+{n:'Box Jump',c:'Cardio',m:'Quads · Glutes · Calves · Core',d:'Stand in front of a box, bend into a quarter squat then jump onto it explosively, landing softly with bent knees. Step back down carefully.',q:'box jump form tutorial'},
+{n:'Burpee',c:'Cardio',m:'Full Body',d:'From standing, drop hands to the floor and jump feet back to a plank. Perform a push-up, jump feet back in, then jump up explosively with arms overhead.',q:'burpee proper form tutorial'},
+{n:'Battle Ropes',c:'Cardio',m:'Shoulders · Arms · Core',d:'Hold one rope in each hand and create alternating or simultaneous waves. Keep knees bent, core engaged, and drive the movement from your whole body.',q:'battle ropes form tutorial workout'},
+{n:'Jump Rope',c:'Cardio',m:'Calves · Shoulders · Cardiovascular',d:'Rotate the rope using your wrists, not your arms, and jump lightly off both feet landing on the balls of your feet. Keep elbows close to your body.',q:'jump rope proper form tutorial'},
+{n:'Farmer Carry',c:'Cardio',m:'Traps · Forearms · Core · Legs',d:'Hold heavy dumbbells at your sides and walk with chest tall, shoulders back, and core braced. Take short, deliberate steps.',q:'farmers walk carry form tutorial'},
+{n:'Sled Push',c:'Cardio',m:'Quads · Glutes · Core · Shoulders',d:'Lean into the sled at about 45 degrees with straight arms. Drive it forward by pushing through the balls of your feet in powerful, alternating steps.',q:'sled push proper form tutorial'},
+{n:'Rowing Machine',c:'Cardio',m:'Back · Legs · Core · Arms',d:'Start with legs bent and arms forward. Drive through your legs first, then lean back slightly and pull the handle to your lower ribcage. Return arms, lean forward, then bend knees.',q:'rowing machine proper form tutorial'},
+{n:'Stationary Bike',c:'Cardio',m:'Quads · Hamstrings · Glutes',d:'Adjust the seat so your knee has a slight bend at the bottom of the pedal stroke. Maintain a steady cadence and keep your upper body relaxed.',q:'stationary bike form tips tutorial'},
+{n:'Treadmill Run',c:'Cardio',m:'Quads · Hamstrings · Calves',d:'Run with a slight forward lean from the ankles, striking mid-foot under your hips. Pump arms in coordination with your legs and breathe rhythmically.',q:'treadmill running form tutorial proper'},
+{n:'Power Clean',c:'Cardio',m:'Full Body',d:'Deadlift the bar explosively then shrug and pull yourself under it, catching in a front rack position. Extend hips fully before the pull phase begins.',q:'power clean form tutorial barbell'}
+];
+
+function findExercise(name){
+  if(!name||typeof EX_LIB==='undefined')return null;
+  var low=name.toLowerCase();
+  var exact=EX_LIB.find(function(e){return e.n.toLowerCase()===low;});
+  if(exact)return exact;
+  return EX_LIB.find(function(e){return e.n.toLowerCase().indexOf(low)>=0||low.indexOf(e.n.toLowerCase())>=0;})||null;
+}
+
+function showExerciseDemo(name){
+  var ex=findExercise(name);
+  var ytUrl='https://www.youtube.com/results?search_query='+encodeURIComponent(ex?ex.q:name+' exercise proper form tutorial');
+  var html='<div style="text-align:center;margin-bottom:18px;">'
+    +'<div style="font-size:20px;font-weight:800;margin-bottom:4px;">'+(ex?ex.n:name)+'</div>'
+    +(ex?'<div style="font-size:12px;color:var(--accent);font-weight:600;margin-bottom:2px;">'+ex.c+'</div>':'')
+    +(ex?'<div style="font-size:12px;color:var(--muted2);">'+ex.m+'</div>':'')
+    +'</div>';
+  if(ex){
+    html+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">How To Perform</div>'
+      +'<div style="font-size:14px;color:var(--text);line-height:1.65;">'+ex.d+'</div>'
+      +'</div>';
+  }
+  html+='<a href="'+ytUrl+'" target="_blank" rel="noopener" style="display:block;background:#ff0000;color:#fff;font-weight:700;text-decoration:none;padding:14px 20px;border-radius:12px;text-align:center;font-size:15px;margin-bottom:8px;">&#9658; Watch Tutorial on YouTube</a>'
+    +'<button onclick="closeModal()" style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--muted2);font-size:14px;cursor:pointer;">Close</button>';
+  openModal(html);
+}
+
+
 function getAllSwapExercises(){
   var prog=getClientProgram();
   var fromClient=[];
@@ -923,7 +1073,7 @@ function buildExBlock(ex,exIdx){
       +'<td><button class="log-btn '+(s.logged?'logged':'')+'" onclick="logSet('+exIdx+','+si+')">'+(s.logged?'Done':dStr||'Log')+'</button></td></tr>';
   });
   wrap.innerHTML='<div class="ex-header"><div>'
-    +'<div class="ex-name">'+ex.name+'</div>'
+    +'<div class="ex-name" onclick="showExerciseDemo(\''+ex.name+'\')" style="cursor:pointer;">'+ex.name+' <span style="font-size:11px;color:var(--accent);">▶ How To</span></div>'
     +(prevDate?'<div style="font-size:11px;color:var(--muted);">Last: '+prevDate+'</div>':'')
     +'</div><div class="ex-actions"><button class="ex-btn" onclick="startSwap('+exIdx+')">Swap</button><button class="ex-btn" onclick="deleteEx('+exIdx+')" style="color:var(--red);">Remove</button></div></div>'
     +(ex._swapping?buildSwapUI(exIdx):'')
@@ -939,7 +1089,8 @@ function startSwap(idx){ACTIVE_WK.exercises[idx]._swapping=true;renderExercises(
 function filterSwap(idx,val){
   var sug=document.getElementById('swap-sug-'+idx);if(!sug)return;
   var pool=getAllSwapExercises();
-  var matches=pool.filter(function(e){return e.toLowerCase().indexOf(val.toLowerCase())>=0;}).slice(0,10);
+  if(typeof EX_LIB!=='undefined'){EX_LIB.forEach(function(e){if(pool.indexOf(e.n)<0)pool.push(e.n);});}
+  var matches=pool.filter(function(e){return e.toLowerCase().indexOf(val.toLowerCase())>=0;}).slice(0,12);
   sug.innerHTML=matches.map(function(e){return '<div onclick="confirmSwap('+idx+',\''+e.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">' +e+'</div>';}).join('');
 }
 function swapKeydown(e,idx){if(e.key==='Enter'){var first=document.querySelector('#swap-sug-'+idx+' div');if(first)first.click();}}
