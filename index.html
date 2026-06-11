@@ -1151,7 +1151,7 @@ function openClientManager(){
       +'<div class="client-info"><div class="client-name">'+c.name+'</div><div class="client-meta">'+(c.customProgram&&c.customProgram.length?c.customProgram.length+' training days':'No program')+' &middot; '+(c.nutrition?c.nutrition.calories+'kcal':'No targets')+'</div></div>'
       +'<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">'
       +'<span class="client-status '+(c.active?'active':'inactive')+'">'+(c.active?'Active':'Inactive')+'</span>'
-      +'<button class="ex-btn" onclick="openEditClient(\''+c.id+'\')">Edit</button>'
+      +(c.email?'<button class="ex-btn" onclick="sendWelcomeEmail(\''+c.id+'\')" style="margin-right:6px;">📧</button>':'')+'<button class="ex-btn" onclick="openEditClient(\''+c.id+'\')">Edit</button>'
       +'</div></div>';
   });
   openModal(html);
@@ -1268,7 +1268,17 @@ function saveClient(){
     console.warn('Firestore save failed:',err.message);
   });
   closeModal();updateClientPill();
-  openClientManager();
+  if(idx<0&&client.email){
+    // New client with email — prompt to send welcome email
+    setTimeout(function(){
+      openModal('<h2>Client Added! 🎉</h2>'
+        +'<p style="color:var(--muted2);font-size:14px;margin-bottom:20px;">Send '+client.name.split(' ')[0]+' their login details and home screen setup instructions?</p>'
+        +'<button class="submit-btn" onclick="closeModal();sendWelcomeEmail(\'' + id + '\');" style="margin-bottom:10px;">📧 Send Welcome Email</button>'
+        +'<button class="submit-btn" style="background:var(--s3);color:var(--muted2);border:1px solid var(--border);" onclick="closeModal();openClientManager();">Skip for now</button>');
+    },300);
+  } else {
+    openClientManager();
+  }
 }
 
 function deleteClient(id){
@@ -1433,6 +1443,38 @@ function showToast(msg){
 }
 
 // ── BOOT ──────────────────────────────────────
+// ── WELCOME EMAIL ──────────────────────────────
+function sendWelcomeEmail(clientId){
+  var client=DB.clients.find(function(c){return c.id===clientId;});
+  if(!client){showToast('Client not found');return;}
+  if(!client.email){showToast('No email address saved for '+client.name);return;}
+  var url='https://ethan-bates-coaching.netlify.app';
+  var subject=encodeURIComponent('Your Ethan Bates Coaching App');
+  var body=encodeURIComponent(
+    'Hi '+client.name.split(' ')[0]+',\n\n'
+    +'Welcome to Ethan Bates Coaching! I\'ve set up your personal coaching app where you can view your program, log workouts, and submit your weekly check-ins.\n\n'
+    +'--- YOUR LOGIN DETAILS ---\n'
+    +'App: '+url+'\n'
+    +'Name: '+client.name+'\n'
+    +'PIN: '+client.pin+'\n\n'
+    +'--- HOW TO ADD TO YOUR HOME SCREEN ---\n\n'
+    +'iPhone (Safari):\n'
+    +'1. Open the link above in Safari\n'
+    +'2. Tap the Share icon (box with arrow) at the bottom\n'
+    +'3. Scroll down and tap "Add to Home Screen"\n'
+    +'4. Tap "Add" — the app icon will appear on your home screen\n\n'
+    +'Android (Chrome):\n'
+    +'1. Open the link above in Chrome\n'
+    +'2. Tap the 3-dot menu (top right)\n'
+    +'3. Tap "Add to Home screen"\n'
+    +'4. Tap "Add"\n\n'
+    +'Once added, open it like any other app — no App Store needed!\n\n'
+    +'Any questions, just message me.\n\n'
+    +'Ethan'
+  );
+  window.location.href='mailto:'+client.email+'?subject='+subject+'&body='+body;
+}
+
 function boot(){
   var session=getSession();
   if(!session){showLoginScreen();return;}
