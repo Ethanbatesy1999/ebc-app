@@ -1287,7 +1287,7 @@ function openMyGoals(){
   var c=DB.clients.find(function(x){return x.id===DB.activeClientId;})||{};
   var html='<h2 style="margin-bottom:16px;">🎯 My Goals</h2>';
   if(c.goals){html+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:18px;font-size:15px;line-height:1.7;color:var(--text);">'+c.goals.replace(/\n/g,'<br>')+'</div>';}
-  else{html+='<div style="color:var(--muted);text-align:center;padding:24px;font-size:14px;">Your coach hasn't set your goals yet.</div>';}
+  else{html+='<div style="color:var(--muted);text-align:center;padding:24px;font-size:14px;">Your coach has not set your goals yet.</div>';}
   html+='<button onclick="closeModal()" style="width:100%;margin-top:16px;background:var(--s3);border:1px solid var(--border);border-radius:12px;padding:13px;color:var(--muted2);font-size:14px;cursor:pointer;">Close</button>';
   openModal(html);
 }
