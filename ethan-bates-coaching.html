@@ -518,7 +518,51 @@ body{display:flex;flex-direction:column;}
 
 <div id="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
+// ── FIREBASE ───────────────────────────────────
+var firebaseConfig = {
+  apiKey: "AIzaSyDJyTNiR6oustkLfS_SEoWu_yoNIxiI-pA",
+  authDomain: "ethan-bates-coaching.firebaseapp.com",
+  projectId: "ethan-bates-coaching",
+  storageBucket: "ethan-bates-coaching.firebasestorage.app",
+  messagingSenderId: "954318673719",
+  appId: "1:954318673719:web:e20c49d1703dc494166cb2"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+
+function saveCheckinToCloud(entry, clientName) {
+  db.collection('checkins').add({
+    clientId: entry.clientId,
+    clientName: clientName || 'Unknown',
+    date: entry.date,
+    trainingAdherence: entry.trainingAdherence || '',
+    whyMissed: entry.whyMissed || '',
+    nutritionAdherence: entry.nutritionAdherence || '',
+    cardio: entry.cardio || '',
+    avgWeight: entry.avgWeight || null,
+    sleep: entry.sleep || null,
+    stress: entry.stress || null,
+    overall: entry.overall || '',
+    measurements: entry.measurements || {},
+    win: entry.win || '',
+    challenge: entry.challenge || '',
+    overcome: entry.overcome || '',
+    foodDiff: entry.foodDiff || '',
+    cardioDiff: entry.cardioDiff || '',
+    helpType: entry.helpType || '',
+    helpDetail: entry.helpDetail || '',
+    anythingElse: entry.anythingElse || '',
+    submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(ref){
+    console.log('Check-in saved to cloud:', ref.id);
+  }).catch(function(err){
+    console.warn('Cloud save failed (offline?):', err.message);
+  });
+}
+
 // ── DATA ──────────────────────────────────────
 var STORAGE_KEY = 'ebc_v2';
 var DB = loadDB();
@@ -715,6 +759,7 @@ function submitWeeklyCheckin(sendEmail){
     anythingElse:document.getElementById('wk-anything-else').value
   };
   DB.checkins.push(entry);saveDB();initHome();
+  saveCheckinToCloud(entry, c.name);
   if(sendEmail){
     var lines=[
       'WEEKLY CHECK-IN - '+c.name,
@@ -1036,6 +1081,7 @@ function renderMore(){
     html+='<div style="margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--accent);font-weight:700;">Coach Panel</div>';
     html+='<div class="more-item" onclick="openClientManager()"><div class="mi-icon" style="background:rgba(0,212,255,0.1);">'+svgIcon('users','var(--accent)')+'</div><div class="mi-text"><div class="mi-title">Manage Clients</div><div class="mi-desc">'+DB.clients.length+' client'+(DB.clients.length!==1?'s':'')+' -- add, edit, remove</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
     html+='<div class="more-item" onclick="openCheckinReview()"><div class="mi-icon" style="background:rgba(255,60,142,0.1);">'+svgIcon('clipboard','var(--pink)')+'</div><div class="mi-text"><div class="mi-title">Review Check-ins</div><div class="mi-desc">View all client submissions</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
+    html+='<div class="more-item" onclick="openCloudCheckins()"><div class="mi-icon" style="background:rgba(0,230,118,0.1);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--green)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg></div><div class="mi-text"><div class="mi-title">Live Cloud Check-ins</div><div class="mi-desc">All submissions from Firebase</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
     html+='<div style="margin:16px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);font-weight:700;">View</div>';
     html+='<div class="more-item" onclick="switchToClientMode()"><div class="mi-icon" style="background:rgba(123,94,167,0.15);">'+svgIcon('shuffle','#7b5ea7')+'</div><div class="mi-text"><div class="mi-title">Switch to Client View</div><div class="mi-desc">See the app as your client does</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
   }else{
@@ -1045,6 +1091,40 @@ function renderMore(){
   html+='<div style="text-align:center;margin-top:24px;color:var(--muted);font-size:12px;">Ethan Bates Coaching v2.0</div>';
   document.getElementById('more-list').innerHTML=html;
 }
+function openCloudCheckins(){
+  openModal('<h2>☁️ Live Cloud Check-ins</h2><div id="cloud-checkin-list"><div style="color:var(--muted);font-size:14px;text-align:center;padding:24px;">Loading from Firebase...</div></div>');
+  db.collection('checkins').orderBy('submittedAt','desc').limit(50).get().then(function(snap){
+    if(snap.empty){
+      document.getElementById('cloud-checkin-list').innerHTML='<div style="color:var(--muted);font-size:14px;text-align:center;padding:24px;">No check-ins yet. Once a client submits their weekly check-in it will appear here.</div>';
+      return;
+    }
+    var html='';
+    snap.forEach(function(doc){
+      var d=doc.data();
+      var dt=d.date?new Date(d.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'Unknown date';
+      html+='<div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+        +'<div style="font-size:15px;font-weight:700;">'+d.clientName+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);">'+dt+'</div>'
+        +'</div>'
+        +'<div style="font-size:13px;color:var(--muted2);line-height:2;">'
+        +(d.trainingAdherence?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">🏋️ Training: '+d.trainingAdherence+'</span>':'')
+        +(d.nutritionAdherence?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">🥗 Nutrition: '+d.nutritionAdherence+'</span>':'')
+        +(d.sleep?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">😴 Sleep: '+d.sleep+'/10</span>':'')
+        +(d.stress?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">😰 Stress: '+d.stress+'/10</span>':'')
+        +(d.avgWeight?'<span style="background:var(--s3);border-radius:6px;padding:2px 8px;margin:2px;display:inline-block;">⚖️ Weight: '+d.avgWeight+'kg</span>':'')
+        +'</div>'
+        +(d.win?'<div style="margin-top:8px;font-size:12px;"><span style="color:var(--green);">✅ Win:</span> <span style="color:var(--text);">'+d.win+'</span></div>':'')
+        +(d.challenge?'<div style="margin-top:4px;font-size:12px;"><span style="color:var(--orange);">⚠️ Challenge:</span> <span style="color:var(--text);">'+d.challenge+'</span></div>':'')
+        +(d.anythingElse?'<div style="margin-top:4px;font-size:12px;"><span style="color:var(--muted2);">💬 Note:</span> <span style="color:var(--text);">'+d.anythingElse+'</span></div>':'')
+        +'</div>';
+    });
+    document.getElementById('cloud-checkin-list').innerHTML=html;
+  }).catch(function(err){
+    document.getElementById('cloud-checkin-list').innerHTML='<div style="color:var(--red);font-size:13px;padding:16px;">Error loading: '+err.message+'</div>';
+  });
+}
+
 function svgIcon(name,color){
   var icons={
     users:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="'+color+'"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
