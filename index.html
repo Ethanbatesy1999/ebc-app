@@ -192,6 +192,8 @@ body{display:flex;flex-direction:column;}
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.role-coach .client-only{display:none!important}
+.role-client .coach-only{display:none!important}
 </style>
 </head>
 <body>
@@ -226,17 +228,18 @@ body{display:flex;flex-direction:column;}
       <div style="font-size:22px;font-weight:800;" id="home-greeting">Good morning</div>
       <div style="font-size:13px;color:var(--muted);margin-top:3px;" id="home-date"></div>
     </div>
-    <div class="streak-row" style="margin-top:14px;">
+    <div class="streak-row client-only" style="margin-top:14px;">
       <div class="streak-card"><div class="num" style="color:var(--accent);" id="streak-workouts">0</div><div class="lbl">Workout streak</div></div>
       <div class="streak-card"><div class="num" style="color:var(--pink);" id="streak-checkins">0</div><div class="lbl">Check-in streak</div></div>
       <div class="streak-card"><div class="num" style="color:var(--orange);" id="streak-days">0</div><div class="lbl">Days in program</div></div>
     </div>
-    <div class="checkin-toggle">
+    <div class="coach-only" id="coach-dashboard" style="margin-top:16px;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;"><div onclick="openClientManager()" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);border-radius:14px;padding:20px;cursor:pointer;text-align:center;"><div style="font-size:32px;margin-bottom:8px;">&#x1F465;</div><div style="font-size:13px;font-weight:700;color:var(--text);">Manage Clients</div></div><div onclick="openCloudCheckins()" style="background:rgba(255,60,142,0.1);border:1px solid rgba(255,60,142,0.2);border-radius:14px;padding:20px;cursor:pointer;text-align:center;"><div style="font-size:32px;margin-bottom:8px;">&#x1F4CB;</div><div style="font-size:13px;font-weight:700;color:var(--text);">Review Check-ins</div></div><div onclick="openCloudCheckins()" style="background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.2);border-radius:14px;padding:20px;cursor:pointer;text-align:center;"><div style="font-size:32px;margin-bottom:8px;">&#x2601;&#xFE0F;</div><div style="font-size:13px;font-weight:700;color:var(--text);">Live Cloud</div></div><div onclick="showTab('more')" style="background:rgba(123,94,167,0.1);border:1px solid rgba(123,94,167,0.2);border-radius:14px;padding:20px;cursor:pointer;text-align:center;"><div style="font-size:32px;margin-bottom:8px;">&#x2699;&#xFE0F;</div><div style="font-size:13px;font-weight:700;color:var(--text);">More Options</div></div></div></div>
+    <div class="checkin-toggle client-only">
       <button class="active" onclick="switchCheckin('daily',this)">Daily Check-in</button>
       <button onclick="switchCheckin('weekly',this)">Weekly Check-in</button>
     </div>
 
-    <div id="daily-checkin">
+    <div class="client-only" id="daily-checkin">
       <div class="daily-card">
         <h3>How are you feeling today?</h3>
         <p>Select your mood to log your daily check-in</p>
@@ -263,7 +266,7 @@ body{display:flex;flex-direction:column;}
       </div>
     </div>
 
-    <div id="weekly-checkin" style="display:none;">
+    <div class="client-only" id="weekly-checkin" style="display:none;">
       <div id="weekly-daily-summary"></div>
       <div class="banner" style="margin-top:0;">
         <div class="banner-icon">📋</div>
@@ -497,15 +500,15 @@ body{display:flex;flex-direction:column;}
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
     <span>Home</span>
   </button>
-  <button class="nav-item" data-tab="workout" onclick="showTab('workout')">
+  <button class="nav-item client-only" data-tab="workout" onclick="showTab('workout')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15m-7.5-7.5v15"/></svg>
     <span>Workout</span>
   </button>
-  <button class="nav-item" data-tab="nutrition" onclick="showTab('nutrition')">
+  <button class="nav-item client-only" data-tab="nutrition" onclick="showTab('nutrition')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
     <span>Nutrition</span>
   </button>
-  <button class="nav-item" data-tab="calendar" onclick="showTab('calendar')">
+  <button class="nav-item client-only" data-tab="calendar" onclick="showTab('calendar')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     <span>Calendar</span>
   </button>
@@ -1860,11 +1863,13 @@ function boot(){
   if(!session){showLoginScreen();return;}
   if(session.role==='coach'){
     DB.isCoach=true;
+    document.body.classList.add('role-coach');
     loadAllClientsFromFirestore(function(){
       saveDB();hideLoginScreen();updateClientPill();initHome();renderWorkoutHome();
     });
   } else {
     DB.isCoach=false;
+    document.body.classList.add('role-client');
     var clientId=session.clientId;
     db.collection('clients').doc(clientId).get().then(function(doc){
       if(!doc.exists){clearSession();showLoginScreen();return;}
