@@ -819,6 +819,7 @@ function initHome(){
       document.getElementById('streak-days').textContent=Math.floor((Date.now()-new Date(c.startDate))/86400000);
     }
   }
+  checkTodayDailyCheckin();
 }
 
 function calcStreak(arr,key){
@@ -840,6 +841,7 @@ function switchCheckin(type,btn){
   document.getElementById('daily-checkin').style.display=type==='daily'?'block':'none';
   document.getElementById('weekly-checkin').style.display=type==='weekly'?'block':'none';
   if(type==='weekly')renderWeeklyDailySummary();
+  if(type==='daily')checkTodayDailyCheckin();
 }
 
 function selectMood(el,mood){
@@ -870,6 +872,26 @@ function submitDailyCheckin(){
   openModal('<div style="text-align:center;padding:28px 16px"><div style="font-size:72px;margin-bottom:16px">✅</div><div style="font-size:24px;font-weight:800;margin-bottom:10px;color:var(--text)">Check-in Submitted!</div><div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:28px">Your daily check-in for '+dayStr+'<br>has been sent to Ethan.<br>Keep up the great work! 💪</div><button onclick="closeModal()" style="width:100%;background:var(--accent);border:none;border-radius:12px;padding:14px;color:#000;font-weight:800;font-size:16px;cursor:pointer;">Done ✓</button></div>');
 }
 
+function checkTodayDailyCheckin(){
+  if(DB.isCoach)return;
+  var c=getActiveClient();var el=document.getElementById('daily-checkin');
+  if(!c||!el)return;
+  var today=new Date().toDateString();
+  var doneLocal=DB.checkins.some(function(ch){return ch.clientId===c.id&&ch.type==='daily'&&new Date(ch.date).toDateString()===today;});
+  if(doneLocal){showDailyAlreadyDone(el);return;}
+  db.collection('dailyCheckins').where('clientId','==',c.id).get().then(function(snap){
+    var done=false;
+    snap.forEach(function(d){if(new Date(d.data().date).toDateString()===today)done=true;});
+    if(done)showDailyAlreadyDone(el);
+  }).catch(function(){});
+}
+function showDailyAlreadyDone(el){
+  el.innerHTML='<div style="text-align:center;padding:48px 24px 40px;">'
+    +'<div style="font-size:64px;margin-bottom:16px;">✅</div>'
+    +'<div style="font-size:20px;font-weight:800;color:var(--text);margin-bottom:10px;">Already checked in today!</div>'
+    +'<div style="font-size:14px;color:var(--muted);line-height:1.7;">Your daily check-in has been submitted.<br>Come back tomorrow to log your next one. 💪</div>'
+    +'</div>';
+}
 function renderWeeklyDailySummary(){
   var c=getActiveClient();var el=document.getElementById('weekly-daily-summary');
   if(!c||!el)return;
