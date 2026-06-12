@@ -1722,7 +1722,7 @@ function openCheckinReview(){
 
 // ── SESSION & LOGIN ────────────────────────────
 var APP_URL='https://ethanbatesy1999.github.io/ebc-app/?client=1';
-var VIDEO_URL='https://YOUR-VIDEO-LINK-HERE'; // Replace with your YouTube/Loom link
+var VIDEO_URL='https://ethanbatesy1999.github.io/ebc-app/tutorial.mp4';
 var SESSION_KEY='ebc_session_v2';
 // Auto-update: compares Last-Modified header — fires automatically on every deploy, no manual version needed
 function checkForAppUpdate(){fetch(window.location.pathname+'?_cv='+Date.now(),{method:'HEAD',cache:'no-store'}).then(function(r){var v=r.headers.get('last-modified')||r.headers.get('etag')||'';if(!v)return;var cur=localStorage.getItem('_appv');if(!cur){localStorage.setItem('_appv',v);return;}if(cur!==v){localStorage.setItem('_appv',v);window.location.reload(true);}}).catch(function(){});}
