@@ -1083,12 +1083,21 @@ function renderWorkoutHome(){
 function setUnit(u){DB.globalUnit=u;saveDB();renderWorkoutHome();if(ACTIVE_WK)renderExercises();}
 
 function startDay(dayId){
+  var c=getActiveClient();if(!c){showToast('No active client');return;}
   var prog=getClientProgram();
   var day=null;
   for(var i=0;i<prog.length;i++){if(prog[i].id===dayId){day=prog[i];break;}}
   if(!day)day={name:'Workout',emoji:'💪',exercises:[]};
-  ACTIVE_WK={clientId:DB.activeClientId,dayId:dayId,dayName:day.name,emoji:day.emoji||'💪',date:new Date().toISOString(),exercises:day.exercises.map(buildEx)};
-  renderActiveWorkout();
+  var d=day;
+  function _build(){
+    ACTIVE_WK={clientId:c.id,dayId:dayId,dayName:d.name,emoji:d.emoji||'💪',date:new Date().toISOString(),exercises:d.exercises.map(buildEx)};
+    renderActiveWorkout();
+  }
+  db.collection('workouts').where('clientId','==',c.id).get().then(function(snap){
+    DB.workouts=DB.workouts.filter(function(w){return w.clientId!==c.id;});
+    snap.forEach(function(doc){DB.workouts.push(Object.assign({firestoreId:doc.id},doc.data()));});
+    _build();
+  }).catch(function(){_build();});
 }
 
 function renderActiveWorkout(){
@@ -1129,7 +1138,7 @@ function buildExBlock(ex,exIdx){
       +'<td><small class="set-prev">'+prevStr+'</small></td>'
       +'<td><input class="set-input" type="number" placeholder="'+(ps&&ps.w||'0')+'" value="'+(s.logged?s.w:'')+'" '+(s.logged?'disabled':'')+' onchange="updateSet('+exIdx+','+si+',\'w\',this.value)" step="0.5"></td>'
       +'<td><input class="set-input" type="number" placeholder="'+(ps&&ps.r||'0')+'" value="'+(s.logged?s.r:'')+'" '+(s.logged?'disabled':'')+' onchange="updateSet('+exIdx+','+si+',\'r\',this.value)"></td>'
-      +'<td><button class="log-btn '+(s.logged?'logged':'')+'" onclick="logSet('+exIdx+','+si+')">'+(s.logged?'Done':dStr||'Log')+'</button></td></tr>';
+      +'<td><button class="log-btn '+(s.logged?'logged':'')+'" onclick="logSet('+exIdx+','+si+')">'+(s.logged?'✓':dStr||'Log')+'</button></td></tr>';
   });
   wrap.innerHTML='<div class="ex-header"><div>'
     +'<div class="ex-name" onclick="showExerciseDemo(\''+ex.name+'\')" style="cursor:pointer;">'+ex.name+' <span style="font-size:11px;color:var(--accent);">▶ How To</span></div>'
@@ -1157,6 +1166,7 @@ function confirmSwap(idx,name){ACTIVE_WK.exercises[idx]=buildEx(name);renderExer
 function updateSet(exIdx,setIdx,field,val){ACTIVE_WK.exercises[exIdx].sets[setIdx][field]=val;}
 function logSet(exIdx,setIdx){
   var s=ACTIVE_WK.exercises[exIdx].sets[setIdx];
+  if(s.logged){s.logged=false;renderExercises();return;}
   if(!s.w&&!s.r){showToast('Enter weight and reps first');return;}
   s.logged=true;s.unit=DB.globalUnit;renderExercises();startRest(90);
 }
