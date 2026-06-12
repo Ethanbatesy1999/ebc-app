@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Ethan Bates Coaching</title>
 <style>
 :root {
@@ -1708,7 +1711,13 @@ function openCheckinReview(){
 }
 
 // ── SESSION & LOGIN ────────────────────────────
+var APP_VERSION='20260612';
+var APP_URL='https://ethanbatesy1999.github.io/ebc-app/?client=1';
 var SESSION_KEY='ebc_session_v2';
+// Auto-update: when a new version is deployed, clients reload automatically
+function checkForAppUpdate(){fetch(window.location.pathname+'?_cv='+Date.now()).then(function(r){return r.text();}).then(function(html){var m=html.match(/APP_VERSION='([^']+)'/);if(m&&m[1]!==APP_VERSION){window.location.reload(true);}}).catch(function(){});}
+document.addEventListener('visibilitychange',function(){if(!document.hidden)checkForAppUpdate();});
+setInterval(checkForAppUpdate,10*60*1000);
 if(new URLSearchParams(window.location.search).get('client')==='1'){localStorage.removeItem(SESSION_KEY);history.replaceState({},'',window.location.pathname);}
 function getSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY))||null;}catch(e){return null;}}
 function setSession(s){localStorage.setItem(SESSION_KEY,JSON.stringify(s));}
@@ -1850,7 +1859,7 @@ function sendWelcomeEmail(clientId){
       to_name: client.name.split(' ')[0],
       client_name: client.name,
       client_pin: client.pin,
-      app_url: 'https://ethanbatesy1999.github.io/ebc-app/?client=1'
+      app_url: APP_URL
     },
     'JVjRFBTBvNkW_9GOx'
   ).then(function(){
