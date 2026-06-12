@@ -860,12 +860,14 @@ function submitDailyCheckin(){
   };
   DB.checkins.push(entry);
   db.collection('dailyCheckins').add({clientId:c.id,clientName:c.name,date:entry.date,mood:entry.mood,note:entry.note,weight:entry.weight,steps:entry.steps,submittedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(function(e){console.warn('Daily cloud save failed:',e.message);});
-  saveDB();showToast('Daily check-in saved ✅');
+  saveDB();
+  var dayStr=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('daily-note').value='';
   document.getElementById('daily-weight').value='';
   document.getElementById('daily-steps').value='';
   document.querySelectorAll('.mood-btn').forEach(function(b){b.classList.remove('selected');});
   initHome();
+  openModal('<div style="text-align:center;padding:28px 16px"><div style="font-size:72px;margin-bottom:16px">✅</div><div style="font-size:24px;font-weight:800;margin-bottom:10px;color:var(--text)">Check-in Submitted!</div><div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:28px">Your daily check-in for '+dayStr+'<br>has been sent to Ethan.<br>Keep up the great work! 💪</div><button onclick="closeModal()" style="width:100%;background:var(--accent);border:none;border-radius:12px;padding:14px;color:#000;font-weight:800;font-size:16px;cursor:pointer;">Done ✓</button></div>');
 }
 
 function renderWeeklyDailySummary(){
@@ -885,8 +887,7 @@ function renderWeeklyDailySummary(){
   if(avgW)html+='<div style="flex:1;background:var(--s2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--text);">'+avgW+'<span style="font-size:11px;color:var(--muted);"> kg</span></div><div style="font-size:11px;color:var(--muted);">Avg weight</div></div>';
   if(avgS)html+='<div style="flex:1;background:var(--s2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--text);">'+avgS.toLocaleString()+'</div><div style="font-size:11px;color:var(--muted);">Avg steps/day</div></div>';
   html+='</div>';
-  var btnArgs=(avgW||'null')+','+(avgS||'null');
-  html+='<button onclick="useWeeklyAverages('+btnArgs+')" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:13px;cursor:pointer;">Use these averages →</button></div>';
+  html+='</div>';
   el.innerHTML=html;
 }
 function useWeeklyAverages(weight,steps){
