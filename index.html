@@ -873,22 +873,26 @@ function submitDailyCheckin(){
 function renderWeeklyDailySummary(){
   var c=getActiveClient();var el=document.getElementById('weekly-daily-summary');
   if(!c||!el)return;
-  var now=new Date();var sevenAgo=new Date(now-7*24*60*60*1000);
-  var dailies=DB.checkins.filter(function(ch){return ch.clientId===c.id&&ch.type==='daily'&&new Date(ch.date)>=sevenAgo;});
-  if(!dailies.length){el.innerHTML='';return;}
-  var weights=dailies.filter(function(d){return d.weight;}).map(function(d){return d.weight;});
-  var steps=dailies.filter(function(d){return d.steps;}).map(function(d){return d.steps;});
-  var avgW=weights.length?(weights.reduce(function(a,b){return a+b;},0)/weights.length).toFixed(1):null;
-  var avgS=steps.length?Math.round(steps.reduce(function(a,b){return a+b;},0)/steps.length):null;
-  if(!avgW&&!avgS){el.innerHTML='';return;}
-  var html='<div style="background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.25);border-radius:14px;padding:14px 16px;margin-bottom:14px;">';
-  html+='<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📊 This week\'s daily data ('+dailies.length+' days logged)</div>';
-  html+='<div style="display:flex;gap:10px;margin-bottom:12px;">';
-  if(avgW)html+='<div style="flex:1;background:var(--s2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--text);">'+avgW+'<span style="font-size:11px;color:var(--muted);"> kg</span></div><div style="font-size:11px;color:var(--muted);">Avg weight</div></div>';
-  if(avgS)html+='<div style="flex:1;background:var(--s2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--text);">'+avgS.toLocaleString()+'</div><div style="font-size:11px;color:var(--muted);">Avg steps/day</div></div>';
-  html+='</div>';
-  html+='</div>';
-  el.innerHTML=html;
+  var now=new Date();var dow=now.getDay();
+  var monday=new Date(now);monday.setDate(now.getDate()-(dow===0?6:dow-1));monday.setHours(0,0,0,0);
+  el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:8px;">Loading...</div>';
+  db.collection('dailyCheckins').where('clientId','==',c.id).get().then(function(snap){
+    var dailies=[];
+    snap.forEach(function(d){var data=d.data();if(new Date(data.date)>=monday)dailies.push(data);});
+    if(!dailies.length){el.innerHTML='';return;}
+    var weights=dailies.filter(function(d){return d.weight;}).map(function(d){return d.weight;});
+    var steps=dailies.filter(function(d){return d.steps;}).map(function(d){return d.steps;});
+    var avgW=weights.length?(weights.reduce(function(a,b){return a+b;},0)/weights.length).toFixed(1):null;
+    var avgS=steps.length?Math.round(steps.reduce(function(a,b){return a+b;},0)/steps.length):null;
+    if(!avgW&&!avgS){el.innerHTML='';return;}
+    var html='<div style="background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.25);border-radius:14px;padding:14px 16px;margin-bottom:14px;">';
+    html+='<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📊 This week\'s daily data ('+dailies.length+' days logged)</div>';
+    html+='<div style="display:flex;gap:10px;">';
+    if(avgW)html+='<div style="flex:1;background:var(--s2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--text);">'+avgW+'<span style="font-size:11px;color:var(--muted);"> kg</span></div><div style="font-size:11px;color:var(--muted);">Avg weight</div></div>';
+    if(avgS)html+='<div style="flex:1;background:var(--s2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--text);">'+avgS.toLocaleString()+'</div><div style="font-size:11px;color:var(--muted);">Avg steps/day</div></div>';
+    html+='</div></div>';
+    el.innerHTML=html;
+  }).catch(function(e){console.warn('Weekly summary error:',e.message);el.innerHTML='';});
 }
 function useWeeklyAverages(weight,steps){
   if(weight){var w=document.getElementById('wk-avg-weight');if(w)w.value=weight;}
