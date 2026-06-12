@@ -609,6 +609,26 @@ var ALL_DEFAULT_EXERCISES=(function(){
   return a.sort();
 })();
 
+var PROGRAM_PRESETS={
+  ppl1:{name:'PPL V1',emoji:'🔁',days:[
+    {id:'ppl1_d1',name:'Push A',emoji:'🔴',exercises:['Barbell Bench Press','Incline Dumbbell Press','Cable Fly','Machine Shoulder Press','Lateral Raise','Tricep Pushdown','Skull Crusher']},
+    {id:'ppl1_d2',name:'Pull A',emoji:'🔵',exercises:['Wide Grip Lat Pulldown','Seated Cable Row','Single Arm Dumbbell Row','Face Pull','Cable Rear Delt Fly','Barbell Curl','Hammer Curl']},
+    {id:'ppl1_d3',name:'Legs A',emoji:'🟢',exercises:['Barbell Back Squat','Leg Press','Leg Extension','Romanian Deadlift','Lying Hamstring Curl','Standing Calf Raise']},
+    {id:'ppl1_d4',name:'Rest Day',emoji:'😴',exercises:[]},
+    {id:'ppl1_d5',name:'Push B',emoji:'🔴',exercises:['Barbell Overhead Press','Dumbbell Shoulder Press','Cable Lateral Raise','Incline Barbell Bench Press','Chest Dips','Cable Rope Overhead Tricep Extension','Overhead Tricep Extension']},
+    {id:'ppl1_d6',name:'Pull B',emoji:'🔵',exercises:['Conventional Deadlift','T-Bar Row','Chest Supported Incline Row','Straight Arm Cable Pulldown','Incline Dumbbell Curl','Barbell Preacher Curl','Cable Hammer Curl']},
+    {id:'ppl1_d7',name:'Legs B',emoji:'🟢',exercises:['Hack Squat','Bulgarian Split Squat','Dumbbell Walking Lunges','Hip Thrust','Glute Kickback','Seated Leg Curl','Seated Calf Raise']}
+  ]},
+  ppl2:{name:'PPL V2',emoji:'🔄',days:[
+    {id:'ppl2_d1',name:'Push A',emoji:'🔴',exercises:['Machine Chest Press','Incline Dumbbell Press','Dumbbell Flye','Arnold Press','Cable Lateral Raise','Overhead Tricep Extension','Tricep Kickback']},
+    {id:'ppl2_d2',name:'Pull A',emoji:'🔵',exercises:['Cable Low Seated Row','Wide Grip Lat Pulldown','Chest Supported Incline Row','Straight Arm Cable Pulldown','EZ Bar Bicep Curl','Incline Dumbbell Curl','Cable Curl']},
+    {id:'ppl2_d3',name:'Legs A',emoji:'🟢',exercises:['Hack Squat','Leg Press','Leg Extension','Lying Hamstring Curl','Hip Thrust','Seated Calf Raise']},
+    {id:'ppl2_d4',name:'Rest Day',emoji:'😴',exercises:[]},
+    {id:'ppl2_d5',name:'Push B',emoji:'🔴',exercises:['Dumbbell Bench Press','Cable Fly','Dumbbell Shoulder Press','Lateral Raise','Front Raise','Close-Grip Bench Press','Tricep Dips']},
+    {id:'ppl2_d6',name:'Pull B',emoji:'🔵',exercises:['Barbell Bent-Over Row','Pull-Up','Single Arm Dumbbell Row','Face Pull','Cable Rear Delt Fly','Dumbbell Curl','Zottman Curl']},
+    {id:'ppl2_d7',name:'Legs B',emoji:'🟢',exercises:['Romanian Deadlift','Bulgarian Split Squat','Goblet Squat','Glute Bridge','Nordic Curl','Hip Abductor Machine','Standing Calf Raise']}
+  ]}
+};
 function getClientProgram(){
   var c=getActiveClient();
   if(c&&c.customProgram&&c.customProgram.length)return c.customProgram;
@@ -1587,6 +1607,7 @@ function clientForm(c){
     +'<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;color:var(--muted2);">Copy from Ethan\'s templates:</span>'
     +Object.entries(DEFAULT_PROGRAMS).map(function(e){return '<button class="ex-btn" onclick="addTemplateDay(\''+e[0]+'\')" style="font-size:12px;">'+e[1].emoji+' '+e[1].name+'</button>';}).join('')
     +'</div>'
+    +'<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;color:var(--muted2);">Load full PPL program:</span>'+Object.entries(PROGRAM_PRESETS).map(function(e){return '<button class="ex-btn" onclick="loadProgramPreset(\''+e[0]+'\')" style="font-size:12px;background:rgba(0,212,255,0.1);border-color:rgba(0,212,255,0.3);color:var(--accent);">'+e[1].emoji+' '+e[1].name+'</button>';}).join('')+'</div>'
     +'<div id="prog-editor"></div>'
     +'<button class="submit-btn" style="background:var(--s3);color:var(--text);border:1px dashed var(--border);margin-bottom:16px;" onclick="addProgramDay()">+ Add Custom Day</button>'
     +'<div style="display:flex;gap:10px;margin-top:8px;">'
@@ -1619,6 +1640,12 @@ function removeProgramDay(i){TEMP_PROGRAM.splice(i,1);renderProgramEditor();}
 function addTemplateDay(dayId){
   var p=DEFAULT_PROGRAMS[dayId];if(!p)return;
   TEMP_PROGRAM.push({id:'d'+Date.now(),name:p.name,emoji:p.emoji,exercises:p.exercises.slice(),exerciseText:p.exercises.join('\n')});
+  renderProgramEditor();
+}
+function loadProgramPreset(key){
+  var p=PROGRAM_PRESETS[key];if(!p)return;
+  if(TEMP_PROGRAM.length&&!confirm('This will replace your current program with '+p.name+'. Continue?'))return;
+  TEMP_PROGRAM=p.days.map(function(d){return {id:'d'+Date.now()+Math.round(Math.random()*9999),name:d.name,emoji:d.emoji,exercises:d.exercises.slice(),exerciseText:d.exercises.join('\n')};});
   renderProgramEditor();
 }
 function flushProgramTextareas(){
