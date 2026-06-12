@@ -255,11 +255,16 @@ body{display:flex;flex-direction:column;}
           <label class="form-label">Morning weight (kg)</label>
           <input type="number" class="form-input" id="daily-weight" placeholder="e.g. 82.4" step="0.1">
         </div>
+        <div class="form-group">
+          <label class="form-label">Today's steps 👟 <span style="font-size:11px;color:var(--muted);font-weight:400;">(check your Health / Google Fit app)</span></label>
+          <input type="number" class="form-input" id="daily-steps" placeholder="e.g. 8500">
+        </div>
         <button class="submit-btn" onclick="submitDailyCheckin()">Log Daily Check-in</button>
       </div>
     </div>
 
     <div id="weekly-checkin" style="display:none;">
+      <div id="weekly-daily-summary"></div>
       <div class="banner" style="margin-top:0;">
         <div class="banner-icon">📋</div>
         <div class="banner-text"><h3>Weekly Check-in</h3><p>Complete this once a week for your coach</p></div>
@@ -834,6 +839,7 @@ function switchCheckin(type,btn){
   btn.classList.add('active');
   document.getElementById('daily-checkin').style.display=type==='daily'?'block':'none';
   document.getElementById('weekly-checkin').style.display=type==='weekly'?'block':'none';
+  if(type==='weekly')renderWeeklyDailySummary();
 }
 
 function selectMood(el,mood){
@@ -846,18 +852,48 @@ function submitDailyCheckin(){
   var c=getActiveClient();
   if(!c){showToast('No active client');return;}
   var moodEl=document.querySelector('.mood-btn.selected');
-  DB.checkins.push({id:Date.now()+'',clientId:c.id,type:'daily',date:new Date().toISOString(),
+  var entry={id:Date.now()+'',clientId:c.id,type:'daily',date:new Date().toISOString(),
     mood:moodEl?moodEl.dataset.mood:'',
     note:document.getElementById('daily-note').value,
-    weight:parseFloat(document.getElementById('daily-weight').value)||null
-  });
-  saveDB();showToast('Daily check-in saved');
+    weight:parseFloat(document.getElementById('daily-weight').value)||null,
+    steps:parseInt(document.getElementById('daily-steps').value)||null
+  };
+  DB.checkins.push(entry);
+  db.collection('dailyCheckins').add({clientId:c.id,clientName:c.name,date:entry.date,mood:entry.mood,note:entry.note,weight:entry.weight,steps:entry.steps,submittedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(function(e){console.warn('Daily cloud save failed:',e.message);});
+  saveDB();showToast('Daily check-in saved ✅');
   document.getElementById('daily-note').value='';
   document.getElementById('daily-weight').value='';
+  document.getElementById('daily-steps').value='';
   document.querySelectorAll('.mood-btn').forEach(function(b){b.classList.remove('selected');});
   initHome();
 }
 
+function renderWeeklyDailySummary(){
+  var c=getActiveClient();var el=document.getElementById('weekly-daily-summary');
+  if(!c||!el)return;
+  var now=new Date();var sevenAgo=new Date(now-7*24*60*60*1000);
+  var dailies=DB.checkins.filter(function(ch){return ch.clientId===c.id&&ch.type==='daily'&&new Date(ch.date)>=sevenAgo;});
+  if(!dailies.length){el.innerHTML='';return;}
+  var weights=dailies.filter(function(d){return d.weight;}).map(function(d){return d.weight;});
+  var steps=dailies.filter(function(d){return d.steps;}).map(function(d){return d.steps;});
+  var avgW=weights.length?(weights.reduce(function(a,b){return a+b;},0)/weights.length).toFixed(1):null;
+  var avgS=steps.length?Math.round(steps.reduce(function(a,b){return a+b;},0)/steps.length):null;
+  if(!avgW&&!avgS){el.innerHTML='';return;}
+  var html='<div style="background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.25);border-radius:14px;padding:14px 16px;margin-bottom:14px;">';
+  html+='<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📊 This week's daily data ('+dailies.length+' days logged)</div>';
+  html+='<div style="display:flex;gap:10px;margin-bottom:12px;">';
+  if(avgW)html+='<div style="flex:1;background:var(--s2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--text);">'+avgW+'<span style="font-size:11px;color:var(--muted);"> kg</span></div><div style="font-size:11px;color:var(--muted);">Avg weight</div></div>';
+  if(avgS)html+='<div style="flex:1;background:var(--s2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--text);">'+avgS.toLocaleString()+'</div><div style="font-size:11px;color:var(--muted);">Avg steps/day</div></div>';
+  html+='</div>';
+  var btnArgs=(avgW||'null')+','+(avgS||'null');
+  html+='<button onclick="useWeeklyAverages('+btnArgs+')" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:13px;cursor:pointer;">Use these averages →</button></div>';
+  el.innerHTML=html;
+}
+function useWeeklyAverages(weight,steps){
+  if(weight){var w=document.getElementById('wk-avg-weight');if(w)w.value=weight;}
+  if(steps){var s=document.getElementById('m-steps');if(s)s.value=steps;}
+  showToast('Averages filled in ✅');
+}
 function checkTrainingAdherence(){
   var v=document.getElementById('wk-training-adherence').value;
   document.getElementById('why-not-wrap').style.display=(v&&v!=='all')?'block':'none';
@@ -1653,7 +1689,8 @@ function showLoginScreen(){
     +'<div style="font-size:17px;font-weight:700;margin-bottom:4px;">👋 I\'m a Client</div>'
     +'<div style="font-size:13px;color:var(--muted2);margin-bottom:18px;">Enter your name and the PIN your coach gave you</div>'
     +'<input class="admin-input" id="login-name" placeholder="Your full name" style="margin-bottom:10px;" autocomplete="name">'
-    +'<input class="admin-input" id="login-pin" placeholder="PIN (e.g. 1234)" type="password" inputmode="numeric" maxlength="6" style="margin-bottom:16px;" autocomplete="off">'
+    +'<input class="admin-input" id="login-pin" placeholder="PIN (e.g. 1234)" type="password" inputmode="numeric" maxlength="6" style="margin-bottom:10px;" autocomplete="off">'
+    +'<div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:16px;">🔒 You'll stay logged in on this device</div>'
     +'<button class="submit-btn" onclick="loginAsClient()">Log In →</button>'
     +'</div>'
     +'<div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:14px;">─────── or ───────</div>'
