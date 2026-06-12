@@ -897,10 +897,7 @@ function renderWeeklyDailySummary(){
   if(!c||!el)return;
   var now=new Date();var dow=now.getDay();
   var monday=new Date(now);monday.setDate(now.getDate()-(dow===0?6:dow-1));monday.setHours(0,0,0,0);
-  el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:8px;">Loading...</div>';
-  db.collection('dailyCheckins').where('clientId','==',c.id).get().then(function(snap){
-    var dailies=[];
-    snap.forEach(function(d){var data=d.data();if(new Date(data.date)>=monday)dailies.push(data);});
+  function renderCard(dailies){
     if(!dailies.length){el.innerHTML='';return;}
     var weights=dailies.filter(function(d){return d.weight;}).map(function(d){return d.weight;});
     var steps=dailies.filter(function(d){return d.steps;}).map(function(d){return d.steps;});
@@ -914,7 +911,14 @@ function renderWeeklyDailySummary(){
     if(avgS)html+='<div style="flex:1;background:var(--s2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--text);">'+avgS.toLocaleString()+'</div><div style="font-size:11px;color:var(--muted);">Avg steps/day</div></div>';
     html+='</div></div>';
     el.innerHTML=html;
-  }).catch(function(e){console.warn('Weekly summary error:',e.message);el.innerHTML='';});
+  }
+  var local=DB.checkins.filter(function(ch){return ch.clientId===c.id&&ch.type==='daily'&&new Date(ch.date)>=monday;});
+  if(local.length){renderCard(local);}else{el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:8px;">Loading...</div>';}
+  db.collection('dailyCheckins').where('clientId','==',c.id).get().then(function(snap){
+    var dailies=[];
+    snap.forEach(function(d){var data=d.data();if(new Date(data.date)>=monday)dailies.push(data);});
+    renderCard(dailies);
+  }).catch(function(e){console.warn('Weekly summary error:',e.message);});
 }
 function useWeeklyAverages(weight,steps){
   if(weight){var w=document.getElementById('wk-avg-weight');if(w)w.value=weight;}
@@ -1700,6 +1704,7 @@ function openCheckinReview(){
 
 // ── SESSION & LOGIN ────────────────────────────
 var SESSION_KEY='ebc_session_v2';
+if(new URLSearchParams(window.location.search).get('client')==='1'){localStorage.removeItem(SESSION_KEY);history.replaceState({},'',window.location.pathname);}
 function getSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY))||null;}catch(e){return null;}}
 function setSession(s){localStorage.setItem(SESSION_KEY,JSON.stringify(s));}
 function clearSession(){localStorage.removeItem(SESSION_KEY);}
