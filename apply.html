@@ -165,7 +165,7 @@
     <a href="https://calendly.com/ethanbatescoaching/30min" target="_blank" style="display:inline-block;padding:14px 28px;background:linear-gradient(135deg,#c9a84c,#e8c96a);color:#000;font-weight:800;font-size:15px;border-radius:12px;text-decoration:none;letter-spacing:0.02em;">📅 Book Your Free Call Now</a>
     <p style="color:#44445a;font-size:12px;margin-top:12px;">You'll receive a confirmation email with the call details.</p>
   </div>
-  <footer><p>© 2026 Ethan Bates Coaching · <a href="mailto:batesethan715@gmail.com">batesethan715@gmail.com</a></p></footer>
+  <footer><p>© 2026 Ethan Bates Coaching · <a href="mailto:ethanbatescoaching@gmail.com">ethanbatescoaching@gmail.com</a></p></footer>
 </div>
 <script>
   function selectChip(el,value){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');document.getElementById('goal-hidden').value=value;}
@@ -177,16 +177,16 @@
     btn.textContent='Sending...';btn.disabled=true;
     var data=new FormData(form);
     data.append('_subject','New Coaching Application - Ethan Bates Coaching');
-    fetch('https://formsubmit.co/ajax/batesethan715@gmail.com',{method:'POST',headers:{'Accept':'application/json'},body:data})
+    fetch('https://formsubmit.co/ajax/ethanbatescoaching@gmail.com',{method:'POST',headers:{'Accept':'application/json'},body:data})
     .then(r=>r.json())
     .then(res=>{
       if(res.success==='true'||res.success===true){
         document.getElementById('form-section').style.display='none';
         document.getElementById('success-state').style.display='block';
         window.scrollTo({top:0,behavior:'smooth'});
-      } else {btn.textContent='Apply for Coaching →';btn.disabled=false;alert('Something went wrong. Please email batesethan715@gmail.com directly.');}
+      } else {btn.textContent='Apply for Coaching →';btn.disabled=false;alert('Something went wrong. Please email ethanbatescoaching@gmail.com directly.');}
     })
-    .catch(()=>{btn.textContent='Apply for Coaching →';btn.disabled=false;alert('Something went wrong. Please email batesethan715@gmail.com directly.');});
+    .catch(()=>{btn.textContent='Apply for Coaching →';btn.disabled=false;alert('Something went wrong. Please email ethanbatescoaching@gmail.com directly.');});
   }
 </script>
 </body>
