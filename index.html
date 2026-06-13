@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -1400,15 +1399,20 @@ function startNutScanner(){
   if(!rd)return;
   rd.innerHTML='';
   try{
-    window._nutScanner=new Html5Qrcode('nut-reader');
+    var fmts=[];
+    if(typeof Html5QrcodeSupportedFormats!=='undefined'){
+      var sf=Html5QrcodeSupportedFormats;
+      fmts=[sf.EAN_13,sf.EAN_8,sf.UPC_A,sf.UPC_E,sf.CODE_128,sf.CODE_39,sf.ITF,sf.QR_CODE];
+    }
+    window._nutScanner=new Html5Qrcode('nut-reader',fmts.length?{formatsToSupport:fmts}:{});
     window._nutScanner.start(
       {facingMode:'environment'},
-      {fps:10,qrbox:{width:240,height:120}},
+      {fps:15,qrbox:{width:280,height:140}},
       function(code){
         window._nutScanner.stop().catch(function(){});
         window._nutScanner=null;
         var msg=document.getElementById('nut-scan-msg');
-        if(msg)msg.textContent='Barcode found! Looking up product...';
+        if(msg)msg.textContent='Barcode detected! Searching databases...';
         lookupBarcode(code);
       },
       function(){}
@@ -1421,29 +1425,79 @@ function startNutScanner(){
 }
 
 function lookupBarcode(barcode){
+  var msg=document.getElementById('nut-scan-msg');
+  if(msg)msg.textContent='Checking global food database...';
   fetch('https://world.openfoodfacts.org/api/v0/product/'+encodeURIComponent(barcode)+'.json?fields=product_name,nutriments,brands,serving_size,serving_quantity')
   .then(function(r){return r.json();})
   .then(function(data){
-    if(!data||data.status===0){
-      var msg=document.getElementById('nut-scan-msg');
-      if(msg)msg.innerHTML='<span style="color:var(--orange);">Product not found. Try Search tab.</span>';
-      return;
+    var p=data&&data.product;
+    var n=p&&p.nutriments;
+    if(p&&p.product_name&&n){
+      var sq=parseFloat(p.serving_quantity)||100;
+      var f=sq/100;
+      var cal=n['energy-kcal_100g']||n['energy-kcal']||0;
+      if(!cal&&n['energy_100g'])cal=(n['energy_100g']||0)/4.184;
+      nutShowConfirm({
+        name:p.product_name,brand:p.brands||'',
+        servingSize:p.serving_size||sq+'g',
+        calories:Math.round(cal*f),
+        protein:Math.round((n.proteins_100g||0)*f*10)/10,
+        carbs:Math.round((n.carbohydrates_100g||0)*f*10)/10,
+        fat:Math.round((n.fat_100g||0)*f*10)/10
+      },'nut-found-card');
+    }else{
+      lookupBarcodeUSDA(barcode);
     }
-    var p=data.product;var n=p.nutriments||{};
-    var sq=parseFloat(p.serving_quantity)||100;var f=sq/100;
+  })
+  .catch(function(){lookupBarcodeUSDA(barcode);});
+}
+
+function lookupBarcodeUSDA(barcode){
+  var msg=document.getElementById('nut-scan-msg');
+  if(msg)msg.textContent='Checking US foods & supplements database...';
+  fetch('https://api.nal.usda.gov/fdc/v1/foods/search?query='+encodeURIComponent(barcode)+'&dataType=Branded&pageSize=5&api_key=DEMO_KEY')
+  .then(function(r){return r.json();})
+  .then(function(data){
+    var foods=data.foods||[];
+    var match=foods.find(function(f){return f.gtinUpc===barcode;})||foods[0];
+    if(!match||!match.description){barcodeNotFound(barcode);return;}
+    var nutrients=match.foodNutrients||[];
+    function gn(names){
+      for(var i=0;i<names.length;i++){
+        var found=nutrients.find(function(x){return x.nutrientName===names[i];});
+        if(found&&found.value!=null)return found.value;
+      }
+      return 0;
+    }
+    var servSz=parseFloat(match.servingSize)||100;
+    var servUnit=match.servingSizeUnit||'g';
+    var factor=servSz/100;
+    var cal=gn(['Energy','Calories']);
     nutShowConfirm({
-      name:p.product_name||'Unknown Product',brand:p.brands||'',
-      servingSize:p.serving_size||sq+'g',
-      calories:Math.round((n['energy-kcal_100g']||n['energy-kcal']||0)*f),
-      protein:Math.round((n.proteins_100g||0)*f*10)/10,
-      carbs:Math.round((n.carbohydrates_100g||0)*f*10)/10,
-      fat:Math.round((n.fat_100g||0)*f*10)/10
+      name:match.description,
+      brand:match.brandOwner||match.brandName||'',
+      servingSize:servSz+servUnit,
+      calories:Math.round(cal*factor),
+      protein:Math.round(gn(['Protein'])*factor*10)/10,
+      carbs:Math.round(gn(['Carbohydrate, by difference','Carbohydrates'])*factor*10)/10,
+      fat:Math.round(gn(['Total lipid (fat)','Total Fat','Fat'])*factor*10)/10
     },'nut-found-card');
   })
-  .catch(function(){
-    var msg=document.getElementById('nut-scan-msg');
-    if(msg)msg.innerHTML='<span style="color:var(--orange);">Lookup failed. Try Search tab.</span>';
-  });
+  .catch(function(){barcodeNotFound(barcode);});
+}
+
+function barcodeNotFound(barcode){
+  var msg=document.getElementById('nut-scan-msg');if(msg)msg.textContent='';
+  var card=document.getElementById('nut-found-card');
+  if(!card)return;
+  card.innerHTML='<div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">'
+    +'<div style="font-size:26px;margin-bottom:8px;">&#128269;</div>'
+    +'<div style="font-size:14px;font-weight:700;margin-bottom:6px;">Product not found</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">This barcode isn't in our databases yet.<br>Search by name or enter it manually.</div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button onclick="nutSwitchTab('search')" style="flex:1;padding:11px;background:var(--accent);color:#000;font-weight:700;border:none;border-radius:10px;font-size:13px;cursor:pointer;">Search by Name</button>'
+    +'<button onclick="nutSwitchTab('manual')" style="flex:1;padding:11px;background:var(--s3);color:var(--text);font-weight:600;border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;">Enter Manually</button>'
+    +'</div></div>';
 }
 
 var _nutSearchTimer=null;
