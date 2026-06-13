@@ -1424,37 +1424,26 @@ function startNutScanner(){
   }
 }
 
-function lookupBarcode(barcode){
+function lookupBarcode(function lookupBarcode(barcode){
   var msg=document.getElementById('nut-scan-msg');
-  if(msg)msg.textContent='Checking global food database...';
+  if(msg)msg.textContent='Searching UK food database...';
   fetch('https://world.openfoodfacts.org/api/v0/product/'+encodeURIComponent(barcode)+'.json?fields=product_name,nutriments,brands,serving_size,serving_quantity')
   .then(function(r){return r.json();})
   .then(function(data){
-    var p=data&&data.product;
-    var n=p&&p.nutriments;
+    var p=data&&data.product;var n=p&&p.nutriments;
     if(p&&p.product_name&&n){
       var sq=parseFloat(p.serving_quantity)||100;
-      var f=sq/100;
-      var cal=n['energy-kcal_100g']||n['energy-kcal']||0;
-      if(!cal&&n['energy_100g'])cal=(n['energy_100g']||0)/4.184;
-      nutShowConfirm({
-        name:p.product_name,brand:p.brands||'',
-        servingSize:p.serving_size||sq+'g',
-        calories:Math.round(cal*f),
-        protein:Math.round((n.proteins_100g||0)*f*10)/10,
-        carbs:Math.round((n.carbohydrates_100g||0)*f*10)/10,
-        fat:Math.round((n.fat_100g||0)*f*10)/10
-      },'nut-found-card');
-    }else{
-      lookupBarcodeUSDA(barcode);
-    }
+      var cal100=n['energy-kcal_100g']||0;
+      if(!cal100&&n['energy_100g'])cal100=n['energy_100g']/4.184;
+      nutShowConfirm({name:p.product_name,brand:p.brands||'',servingSize:p.serving_size||sq+'g',defaultGrams:sq,per100:{calories:Math.round(cal100*10)/10,protein:Math.round((n.proteins_100g||0)*100)/100,carbs:Math.round((n.carbohydrates_100g||0)*100)/100,fat:Math.round((n.fat_100g||0)*100)/100}},'nut-found-card');
+    }else{lookupBarcodeUSDA(barcode);}
   })
   .catch(function(){lookupBarcodeUSDA(barcode);});
 }
 
 function lookupBarcodeUSDA(barcode){
   var msg=document.getElementById('nut-scan-msg');
-  if(msg)msg.textContent='Checking US foods & supplements database...';
+  if(msg)msg.textContent='Checking supplement & branded food database...';
   fetch('https://api.nal.usda.gov/fdc/v1/foods/search?query='+encodeURIComponent(barcode)+'&dataType=Branded&pageSize=5&api_key=DEMO_KEY')
   .then(function(r){return r.json();})
   .then(function(data){
@@ -1462,72 +1451,52 @@ function lookupBarcodeUSDA(barcode){
     var match=foods.find(function(f){return f.gtinUpc===barcode;})||foods[0];
     if(!match||!match.description){barcodeNotFound(barcode);return;}
     var nutrients=match.foodNutrients||[];
-    function gn(names){
-      for(var i=0;i<names.length;i++){
-        var found=nutrients.find(function(x){return x.nutrientName===names[i];});
-        if(found&&found.value!=null)return found.value;
-      }
-      return 0;
-    }
+    function gn(names){for(var i=0;i<names.length;i++){var found=nutrients.find(function(x){return x.nutrientName===names[i];});if(found&&found.value!=null)return found.value;}return 0;}
     var servSz=parseFloat(match.servingSize)||100;
     var servUnit=match.servingSizeUnit||'g';
-    var factor=servSz/100;
-    var cal=gn(['Energy','Calories']);
-    nutShowConfirm({
-      name:match.description,
-      brand:match.brandOwner||match.brandName||'',
-      servingSize:servSz+servUnit,
-      calories:Math.round(cal*factor),
-      protein:Math.round(gn(['Protein'])*factor*10)/10,
-      carbs:Math.round(gn(['Carbohydrate, by difference','Carbohydrates'])*factor*10)/10,
-      fat:Math.round(gn(['Total lipid (fat)','Total Fat','Fat'])*factor*10)/10
-    },'nut-found-card');
+    nutShowConfirm({name:match.description,brand:match.brandOwner||match.brandName||'',servingSize:servSz+servUnit,defaultGrams:servSz,per100:{calories:Math.round(gn(['Energy','Calories'])*10)/10,protein:Math.round(gn(['Protein'])*100)/100,carbs:Math.round(gn(['Carbohydrate, by difference','Carbohydrates'])*100)/100,fat:Math.round(gn(['Total lipid (fat)','Total Fat','Fat'])*100)/100}},'nut-found-card');
   })
   .catch(function(){barcodeNotFound(barcode);});
 }
 
 function barcodeNotFound(barcode){
   var msg=document.getElementById('nut-scan-msg');if(msg)msg.textContent='';
-  var card=document.getElementById('nut-found-card');
-  if(!card)return;
+  var card=document.getElementById('nut-found-card');if(!card)return;
   card.innerHTML='<div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">'
     +'<div style="font-size:26px;margin-bottom:8px;">&#128269;</div>'
     +'<div style="font-size:14px;font-weight:700;margin-bottom:6px;">Product not found</div>'
-    +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">This barcode isn't in our databases yet.<br>Search by name or enter it manually.</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Not in our databases yet.<br>Search by name or add manually.</div>'
     +'<div style="display:flex;gap:8px;">'
-    +'<button onclick="nutSwitchTab('search')" style="flex:1;padding:11px;background:var(--accent);color:#000;font-weight:700;border:none;border-radius:10px;font-size:13px;cursor:pointer;">Search by Name</button>'
-    +'<button onclick="nutSwitchTab('manual')" style="flex:1;padding:11px;background:var(--s3);color:var(--text);font-weight:600;border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;">Enter Manually</button>'
+    +'<button onclick="nutSwitchTab(\'search\')" style="flex:1;padding:11px;background:var(--accent);color:#000;font-weight:700;border:none;border-radius:10px;font-size:13px;cursor:pointer;">Search by Name</button>'
+    +'<button onclick="nutSwitchTab(\'manual\')" style="flex:1;padding:11px;background:var(--s3);color:var(--text);font-weight:600;border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;">Enter Manually</button>'
     +'</div></div>';
 }
 
-var _nutSearchTimer=null;
+var _nutSearchTimer=null,_pendingFoodPer100=null;
 function nutSearchDebounce(q){
   clearTimeout(_nutSearchTimer);
   var el=document.getElementById('nut-results');
   if(!q||q.length<2){if(el)el.innerHTML='';return;}
-  if(el)el.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">Searching millions of products...</div>';
+  if(el)el.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">Searching UK food database...</div>';
   _nutSearchTimer=setTimeout(function(){nutDoSearch(q);},550);
 }
 
 function nutDoSearch(q){
-  fetch('https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=20&fields=product_name,nutriments,brands,serving_size,serving_quantity')
+  fetch('https://uk.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=20&fields=product_name,nutriments,brands,serving_size,serving_quantity')
   .then(function(r){return r.json();})
   .then(function(data){
     var el=document.getElementById('nut-results');if(!el)return;
-    _nutSearchResults=(data.products||[]).filter(function(p){return p.product_name&&p.nutriments;});
-    if(!_nutSearchResults.length){el.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">No results. Try different keywords.</div>';return;}
-    el.innerHTML=_nutSearchResults.map(function(p,i){
-      var n=p.nutriments||{};var sq=parseFloat(p.serving_quantity)||100;var fac=sq/100;
-      var cal=Math.round((n['energy-kcal_100g']||0)*fac);
-      var prot=Math.round((n.proteins_100g||0)*fac*10)/10;
-      var carb=Math.round((n.carbohydrates_100g||0)*fac*10)/10;
-      var fat3=Math.round((n.fat_100g||0)*fac*10)/10;
-      return '<div onclick="nutPickResult('+i+')" style="padding:10px 12px;background:var(--s3);border-radius:10px;margin-bottom:6px;cursor:pointer;border:1px solid var(--border);">'
-        +'<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+p.product_name+'</div>'
-        +(p.brands?'<div style="font-size:11px;color:var(--muted);">'+p.brands+(p.serving_size?' &#183; '+p.serving_size:'')+'</div>':'')
-        +'<div style="font-size:11px;margin-top:3px;"><span style="color:var(--accent);font-weight:700;">'+cal+' kcal</span> &#183; P:'+prot+'g C:'+carb+'g F:'+fat3+'g</div>'
-        +'</div>';
-    }).join('');
+    _nutSearchResults=(data.products||[]).filter(function(p){return p.product_name&&p.nutriments&&(p.nutriments['energy-kcal_100g']||p.nutriments['energy_100g']);});
+    if(_nutSearchResults.length<5){
+      fetch('https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=20&fields=product_name,nutriments,brands,serving_size,serving_quantity')
+      .then(function(r2){return r2.json();})
+      .then(function(d2){
+        var extra=(d2.products||[]).filter(function(p){return p.product_name&&p.nutriments&&(p.nutriments['energy-kcal_100g']||p.nutriments['energy_100g']);});
+        var seen=new Set(_nutSearchResults.map(function(p){return p.product_name.toLowerCase();}));
+        extra.forEach(function(p){if(!seen.has(p.product_name.toLowerCase()))_nutSearchResults.push(p);});
+        renderNutResults(el);
+      }).catch(function(){renderNutResults(el);});
+    }else{renderNutResults(el);}
   })
   .catch(function(){
     var el=document.getElementById('nut-results');
@@ -1535,38 +1504,78 @@ function nutDoSearch(q){
   });
 }
 
+function renderNutResults(el){
+  if(!el||!_nutSearchResults.length){if(el)el.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">No results. Try different keywords.</div>';return;}
+  el.innerHTML=_nutSearchResults.map(function(p,i){
+    var n=p.nutriments||{};
+    var cal100=n['energy-kcal_100g']||(n['energy_100g']?(n['energy_100g']/4.184):0);
+    var sq=parseFloat(p.serving_quantity)||100;
+    var cal=Math.round(cal100*sq/100);
+    var prot=Math.round((n.proteins_100g||0)*sq/100*10)/10;
+    var carb=Math.round((n.carbohydrates_100g||0)*sq/100*10)/10;
+    var fat3=Math.round((n.fat_100g||0)*sq/100*10)/10;
+    return '<div onclick="nutPickResult('+i+')" style="padding:10px 12px;background:var(--s3);border-radius:10px;margin-bottom:6px;cursor:pointer;border:1px solid var(--border);">'
+      +'<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+p.product_name+'</div>'
+      +(p.brands?'<div style="font-size:11px;color:var(--muted);">'+p.brands+(p.serving_size?' &#183; '+p.serving_size:'')+'</div>':'')
+      +'<div style="font-size:11px;margin-top:3px;"><span style="color:var(--accent);font-weight:700;">'+cal+' kcal</span> &#183; P:'+prot+'g C:'+carb+'g F:'+fat3+'g<span style="color:var(--muted);"> per '+sq+'g</span></div>'
+      +'</div>';
+  }).join('');
+}
+
 function nutPickResult(i){
   var p=_nutSearchResults[i];if(!p)return;
-  var n=p.nutriments||{};var sq=parseFloat(p.serving_quantity)||100;var fac=sq/100;
-  nutShowConfirm({
-    name:p.product_name,brand:p.brands||'',servingSize:p.serving_size||sq+'g',
-    calories:Math.round((n['energy-kcal_100g']||0)*fac),
-    protein:Math.round((n.proteins_100g||0)*fac*10)/10,
-    carbs:Math.round((n.carbohydrates_100g||0)*fac*10)/10,
-    fat:Math.round((n.fat_100g||0)*fac*10)/10
-  },'nut-results');
+  var n=p.nutriments||{};
+  var cal100=n['energy-kcal_100g']||(n['energy_100g']?(n['energy_100g']/4.184):0);
+  var sq=parseFloat(p.serving_quantity)||100;
+  nutShowConfirm({name:p.product_name,brand:p.brands||'',servingSize:p.serving_size||sq+'g',defaultGrams:sq,per100:{calories:Math.round(cal100*10)/10,protein:Math.round((n.proteins_100g||0)*100)/100,carbs:Math.round((n.carbohydrates_100g||0)*100)/100,fat:Math.round((n.fat_100g||0)*100)/100}},'nut-results');
 }
 
 function nutShowConfirm(food,targetEl){
-  _pendingFood=food;
+  _pendingFood=food;_pendingFoodPer100=food.per100||{calories:food.calories||0,protein:food.protein||0,carbs:food.carbs||0,fat:food.fat||0};
+  var grams=food.defaultGrams||100;
+  var calcs=nutCalcFromGrams(grams);
   var el=document.getElementById(targetEl);if(!el)return;
   el.innerHTML='<div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;">'
     +'<div style="font-size:15px;font-weight:800;margin-bottom:2px;">'+food.name+'</div>'
-    +(food.brand?'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">'+food.brand+'</div>':'')
-    +'<div style="display:flex;gap:0;margin-bottom:10px;text-align:center;">'
-    +'<div style="flex:1;"><div style="font-size:20px;font-weight:800;color:var(--accent);">'+food.calories+'</div><div style="font-size:10px;color:var(--muted);">kcal</div></div>'
-    +'<div style="flex:1;"><div style="font-size:16px;font-weight:700;">'+food.protein+'g</div><div style="font-size:10px;color:var(--muted);">protein</div></div>'
-    +'<div style="flex:1;"><div style="font-size:16px;font-weight:700;">'+food.carbs+'g</div><div style="font-size:10px;color:var(--muted);">carbs</div></div>'
-    +'<div style="flex:1;"><div style="font-size:16px;font-weight:700;">'+food.fat+'g</div><div style="font-size:10px;color:var(--muted);">fat</div></div>'
+    +(food.brand?'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">'+food.brand+'</div>':'<div style="margin-bottom:10px;"></div>')
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">'
+    +'<div style="font-size:13px;color:var(--muted);">Serving:</div>'
+    +'<input id="nut-gram-input" type="number" value="'+grams+'" min="1" max="9999" oninput="nutRecalcServing(this.value)" style="width:72px;background:var(--s3);border:1.5px solid var(--accent);border-radius:8px;padding:7px 8px;color:var(--text);font-size:15px;font-weight:700;text-align:center;">'
+    +'<div style="font-size:13px;color:var(--muted);">g</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-left:auto;">per 100g: '+Math.round(_pendingFoodPer100.calories)+' kcal</div>'
     +'</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Per serving: '+food.servingSize+'</div>'
+    +'<div style="display:flex;gap:0;margin-bottom:12px;text-align:center;background:var(--s3);border-radius:10px;padding:10px 0;">'
+    +'<div style="flex:1;"><div id="nc-cal" style="font-size:20px;font-weight:800;color:var(--accent);">'+calcs.calories+'</div><div style="font-size:10px;color:var(--muted);">kcal</div></div>'
+    +'<div style="flex:1;border-left:1px solid var(--border);"><div id="nc-p" style="font-size:16px;font-weight:700;">'+calcs.protein+'g</div><div style="font-size:10px;color:var(--muted);">protein</div></div>'
+    +'<div style="flex:1;border-left:1px solid var(--border);"><div id="nc-c" style="font-size:16px;font-weight:700;">'+calcs.carbs+'g</div><div style="font-size:10px;color:var(--muted);">carbs</div></div>'
+    +'<div style="flex:1;border-left:1px solid var(--border);"><div id="nc-f" style="font-size:16px;font-weight:700;">'+calcs.fat+'g</div><div style="font-size:10px;color:var(--muted);">fat</div></div>'
+    +'</div>'
     +'<button onclick="nutConfirmAdd()" style="width:100%;padding:13px;background:var(--accent);color:#000;font-weight:700;border:none;border-radius:10px;font-size:15px;cursor:pointer;">&#10003; Add to '+_currentMeal+'</button>'
     +'</div>';
 }
 
+function nutCalcFromGrams(g){
+  if(!_pendingFoodPer100)return{calories:0,protein:0,carbs:0,fat:0};
+  var factor=(parseFloat(g)||0)/100;
+  return{calories:Math.round(_pendingFoodPer100.calories*factor),protein:Math.round(_pendingFoodPer100.protein*factor*10)/10,carbs:Math.round(_pendingFoodPer100.carbs*factor*10)/10,fat:Math.round(_pendingFoodPer100.fat*factor*10)/10};
+}
+
+function nutRecalcServing(g){
+  var calcs=nutCalcFromGrams(g);
+  var calEl=document.getElementById('nc-cal');var pEl=document.getElementById('nc-p');
+  var cEl=document.getElementById('nc-c');var fEl=document.getElementById('nc-f');
+  if(calEl)calEl.textContent=calcs.calories;
+  if(pEl)pEl.textContent=calcs.protein+'g';
+  if(cEl)cEl.textContent=calcs.carbs+'g';
+  if(fEl)fEl.textContent=calcs.fat+'g';
+}
+
 function nutConfirmAdd(){
-  if(!_pendingFood)return;
-  addFoodEntry(_pendingFood,_currentMeal);
+  if(!_pendingFood||!_pendingFoodPer100)return;
+  var gramInput=document.getElementById('nut-gram-input');
+  var grams=parseFloat(gramInput?gramInput.value:100)||100;
+  var calcs=nutCalcFromGrams(grams);
+  addFoodEntry({name:_pendingFood.name,brand:_pendingFood.brand||'',servingSize:grams+'g',calories:calcs.calories,protein:calcs.protein,carbs:calcs.carbs,fat:calcs.fat},_currentMeal);
 }
 
 function addManualFood(){
