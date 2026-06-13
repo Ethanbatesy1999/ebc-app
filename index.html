@@ -1118,7 +1118,7 @@ function renderWorkoutHome(){
       var last=null;
       for(var i=wks.length-1;i>=0;i--){if(wks[i].dayId===day.id){last=wks[i];break;}}
       var lastStr=last?'<div style="font-size:11px;color:var(--muted);margin-top:3px;">Last: '+new Date(last.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})+'</div>':'';
-      html+='<div class="more-item" style="margin-bottom:8px;" onclick="startDay(\''+day.id+'\')"><div style="font-size:24px;">'+(day.emoji||'💪')+'</div><div class="mi-text"><div class="mi-title">'+day.name+'</div><div class="mi-desc">'+day.exercises.length+' exercises'+lastStr+'</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
+      html+='<div class="more-item" style="margin-bottom:8px;" onclick="startDay(\''+day.id+'\')"><div style="font-size:24px;">'+(day.emoji||'💪')+'</div><div class="mi-text"><div class="mi-title">'+day.name+'</div><div class="mi-desc">'+(day.exercises||[]).length+' exercises'+lastStr+'</div></div><svg class="mi-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>';
     });
   }
   html+='</div>';
@@ -1138,7 +1138,7 @@ function startDay(dayId){
   if(!day)day={name:'Workout',emoji:'💪',exercises:[]};
   var d=day;
   function _build(){
-    ACTIVE_WK={clientId:c.id,dayId:dayId,dayName:d.name,emoji:d.emoji||'💪',date:new Date().toISOString(),exercises:d.exercises.map(buildEx)};
+    ACTIVE_WK={clientId:c.id,dayId:dayId,dayName:d.name,emoji:d.emoji||'💪',date:new Date().toISOString(),exercises:(d.exercises||[]).map(buildEx)};
     renderActiveWorkout();
   }
   db.collection('workouts').where('clientId','==',c.id).get().then(function(snap){
