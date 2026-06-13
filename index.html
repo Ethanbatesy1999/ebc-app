@@ -1424,7 +1424,7 @@ function startNutScanner(){
   }
 }
 
-function lookupBarcode(function lookupBarcode(barcode){
+function lookupBarcode(barcode){
   var msg=document.getElementById('nut-scan-msg');
   if(msg)msg.textContent='Searching UK food database...';
   fetch('https://world.openfoodfacts.org/api/v0/product/'+encodeURIComponent(barcode)+'.json?fields=product_name,nutriments,brands,serving_size,serving_quantity')
