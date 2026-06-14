@@ -2234,6 +2234,7 @@ function sendWelcomeEmail(clientId){
     'JVjRFBTBvNkW_9GOx'
   ).then(function(){
     showToast('Welcome email sent to '+client.name.split(' ')[0]+' ✅');
+    var btn=document.querySelector('[onclick*="sendWelcomeEmail"]');if(btn){var orig=btn.innerHTML;btn.innerHTML='✅ Sent!';btn.disabled=true;setTimeout(function(){btn.innerHTML=orig;btn.disabled=false;},3000);}
   }).catch(function(err){
     console.warn('EmailJS error:',err);
     showToast('Failed to send email — check connection');
