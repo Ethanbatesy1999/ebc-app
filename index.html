@@ -587,6 +587,8 @@ function loadDB(){
   catch(e){return defaultDB();}
 }
 function saveDB(){localStorage.setItem(STORAGE_KEY,JSON.stringify(DB));}
+function saveActiveWK(){try{if(ACTIVE_WK){localStorage.setItem(WK_KEY,JSON.stringify(ACTIVE_WK));}else{localStorage.removeItem(WK_KEY);}}catch(e){}}
+function restoreActiveWK(){try{var d=localStorage.getItem(WK_KEY);if(!d)return false;var wk=JSON.parse(d);if(wk&&wk.clientId===DB.activeClientId){ACTIVE_WK=wk;ACTIVE_WK.exercises.forEach(function(ex){ex._prev=getPrev(ex.name);delete ex._swapping;});return true;}return false;}catch(e){return false;}}
 function getActiveClient(){
   if(!DB.activeClientId&&DB.clients.length)DB.activeClientId=DB.clients[0].id;
   return DB.clients.find(function(c){return c.id===DB.activeClientId;})||null;
@@ -1092,7 +1094,7 @@ function switchActiveClient(id){
 
 // ── WORKOUT TAB ───────────────────────────────
 function renderWorkoutHome(){
-  if(ACTIVE_WK){renderActiveWorkout();return;}
+  if(!ACTIVE_WK){restoreActiveWK();}if(ACTIVE_WK){renderActiveWorkout();return;}
   var c=getActiveClient();
   var wks=c?clientWorkouts(c.id):[];
   var prog=getClientProgram();
@@ -1211,12 +1213,12 @@ function filterSwap(idx,val){
 }
 function swapKeydown(e,idx){if(e.key==='Enter'){var first=document.querySelector('#swap-sug-'+idx+' div');if(first)first.click();}}
 function confirmSwap(idx,name){ACTIVE_WK.exercises[idx]=buildEx(name);renderExercises();}
-function updateSet(exIdx,setIdx,field,val){ACTIVE_WK.exercises[exIdx].sets[setIdx][field]=val;}
+function updateSet(exIdx,setIdx,field,val){ACTIVE_WK.exercises[exIdx].sets[setIdx][field]=val;saveActiveWK();}
 function logSet(exIdx,setIdx){
   var s=ACTIVE_WK.exercises[exIdx].sets[setIdx];
   if(s.logged){s.logged=false;renderExercises();return;}
   if(!s.w&&!s.r){showToast('Enter weight and reps first');return;}
-  s.logged=true;s.unit=DB.globalUnit;renderExercises();startRest(90);
+  s.logged=true;s.unit=DB.globalUnit;saveActiveWK();renderExercises();startRest(90);
 }
 function addSet(exIdx){var u=DB.globalUnit;ACTIVE_WK.exercises[exIdx].sets.push({w:'',r:'',unit:u,logged:false});renderExercises();}
 function deleteEx(idx){if(!confirm('Remove this exercise?'))return;ACTIVE_WK.exercises.splice(idx,1);renderExercises();}
@@ -1244,11 +1246,11 @@ function finishWorkout(){
   if(!hasLogged&&!confirm('No sets logged. Save anyway?'))return;
   ACTIVE_WK.exercises.forEach(function(ex){delete ex._swapping;delete ex._prev;});
   var wkToSave=ACTIVE_WK;
-  DB.workouts.push(wkToSave);saveDB();ACTIVE_WK=null;stopRest();
+  DB.workouts.push(wkToSave);saveDB();ACTIVE_WK=null;saveActiveWK();stopRest();
   db.collection('workouts').add(wkToSave).catch(function(err){console.warn('Workout cloud save failed:',err.message);});
   showToast('Workout saved');renderWorkoutHome();
 }
-function cancelWorkout(){if(!confirm('Cancel workout? Progress will be lost.'))return;ACTIVE_WK=null;stopRest();renderWorkoutHome();}
+function cancelWorkout(){if(!confirm('Cancel workout? Progress will be lost.'))return;ACTIVE_WK=null;saveActiveWK();stopRest();renderWorkoutHome();}
 
 function showHistory(){
   document.getElementById('wk-home').style.display='none';
@@ -1897,7 +1899,7 @@ function openClientManager(){
       +'<div class="client-info"><div class="client-name">'+c.name+'</div><div class="client-meta">'+(c.customProgram&&c.customProgram.length?c.customProgram.length+' training days':'No program')+' &middot; '+(c.nutrition?c.nutrition.calories+'kcal':'No targets')+'</div></div>'
       +'<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">'
       +'<span class="client-status '+(c.active?'active':'inactive')+'">'+(c.active?'Active':'Inactive')+'</span>'
-      +(c.email?'<button class="ex-btn" onclick="sendWelcomeEmail(\''+c.id+'\')" style="margin-right:6px;">📧</button>':'')+'<button class="ex-btn" onclick="openEditClient(\''+c.id+'\')">Edit</button>'
+      +(c.email?'<button class="ex-btn" onclick="sendWelcomeEmail(\''+c.id+'\')" style="margin-right:6px;">📧 Welcome</button>':'')+(c.email?'<button class="ex-btn" onclick="sendInstallEmailById(\''+c.id+'\')" style="margin-right:6px;color:var(--accent);" title="Install Email">📱 Install</button>':'')+'<button class="ex-btn" onclick="openEditClient(\''+c.id+'\')">Edit</button>'
       +'</div></div>';
   });
   openModal(html);
@@ -2082,7 +2084,7 @@ function openCheckinReview(){
 // ── SESSION & LOGIN ────────────────────────────
 var APP_URL='https://ethanbatesy1999.github.io/ebc-app/?client=1';
 var VIDEO_URL='https://ethanbatesy1999.github.io/ebc-app/tutorial.mp4';
-var SESSION_KEY='ebc_session_v2';
+var SESSION_KEY='ebc_session_v2';var WK_KEY='ebc_active_wk';
 // Auto-update: compares Last-Modified header — fires automatically on every deploy, no manual version needed
 function checkForAppUpdate(){fetch(window.location.pathname+'?_cv='+Date.now(),{method:'HEAD',cache:'no-store'}).then(function(r){var v=r.headers.get('last-modified')||r.headers.get('etag')||'';if(!v)return;var cur=localStorage.getItem('_appv');if(!cur){localStorage.setItem('_appv',v);return;}if(cur!==v){localStorage.setItem('_appv',v);window.location.reload(true);}}).catch(function(){});}
 document.addEventListener('visibilitychange',function(){if(!document.hidden)checkForAppUpdate();});
@@ -2216,6 +2218,7 @@ function showToast(msg){
 
 // ── BOOT ──────────────────────────────────────
 // ── WELCOME EMAIL ──────────────────────────────
+function sendInstallEmailById(clientId){var cl=DB.clients.find(function(c){return c.id===clientId;});if(!cl||!cl.email){showToast('No email address for this client');return;}var fn=cl.name?cl.name.split(' ')[0]:'there';emailjs.send('service_ldwp9li','template_install',{to_email:cl.email,to_name:fn,first_name:fn,subject:'📱 Save your EBC app to your phone — takes 30 seconds'}).then(function(){showToast('📱 Install email sent to '+cl.name+'! ✔');}).catch(function(e){showToast('Email failed — check connection');console.warn(e);});}
 function sendWelcomeEmail(clientId){
   var client=DB.clients.find(function(c){return c.id===clientId;});
   if(!client){showToast('Client not found');return;}
