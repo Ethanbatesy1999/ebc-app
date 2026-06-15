@@ -2244,7 +2244,7 @@ function sendWelcomeEmail(clientId){
 }
 function sendInstallEmail(cl){if(!cl||!cl.email)return;var svc='service_ldwp9li';var tpl='template_install';var fn=cl.name?cl.name.split(' ')[0]:'there';var a1='Hey '+fn+',\n\n';var a2='Your EBC Coaching app is live! Save it to your home screen for instant access (no App Store needed - it works just like a downloaded app).\n\n';var a3='ANDROID (Google Chrome):\n1. Open Chrome and go to: ethanbatesy1999.github.io/ebc-app\n2. Tap the 3 dots menu (top-right)\n3. Tap Add to Home screen\n4. Tap Add\n\n';var a4='iPHONE (Safari):\n1. Open Safari and go to: ethanbatesy1999.github.io/ebc-app\n2. Tap Share button (box with arrow pointing up)\n3. Tap Add to Home Screen\n4. Tap Add\n\n';var a5='Any issues? Just reply and I will sort it.\n\nEthan\nEBC Coaching\nethanbatescoaching@gmail.com';emailjs.send(svc,tpl,{to_email:cl.email,to_name:fn,subject:'Save your EBC Coaching app to your home screen',message:a1+a2+a3+a4+a5});}
 function sendInstallToAll(){var clients=DB.clients.filter(function(c){return c.email;});if(!clients.length){alert('No clients with email addresses found.');return;}if(!confirm('Send app install email to '+clients.length+' client(s)?'))return;clients.forEach(function(cl,i){setTimeout(function(){sendInstallEmail(cl);},i*1500);});setTimeout(function(){alert('Done! Install email sent to '+clients.length+' client(s).');},clients.length*1500+500);}
-function boot(){
+function boot(){emailjs.init('JVjRFBTBvNkW_9GOx');
   var session=getSession();
   if(!session){showLoginScreen();return;}
   if(session.role==='coach'){
