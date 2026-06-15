@@ -2242,7 +2242,72 @@ function sendWelcomeEmail(clientId){
   sendInstallEmail(client);
   });
 }
-function sendInstallEmail(cl){if(!cl||!cl.email)return;var svc='service_ldwp9li';var tpl='template_install';var fn=cl.name?cl.name.split(' ')[0]:'there';var a1='Hey '+fn+',\n\n';var a2='Your EBC Coaching app is live! Save it to your home screen for instant access (no App Store needed - it works just like a downloaded app).\n\n';var a3='ANDROID (Google Chrome):\n1. Open Chrome and go to: ethanbatesy1999.github.io/ebc-app\n2. Tap the 3 dots menu (top-right)\n3. Tap Add to Home screen\n4. Tap Add\n\n';var a4='iPHONE (Safari):\n1. Open Safari and go to: ethanbatesy1999.github.io/ebc-app\n2. Tap Share button (box with arrow pointing up)\n3. Tap Add to Home Screen\n4. Tap Add\n\n';var a5='Any issues? Just reply and I will sort it.\n\nEthan\nEBC Coaching\nethanbatescoaching@gmail.com';emailjs.send(svc,tpl,{to_email:cl.email,to_name:fn,subject:'Save your EBC Coaching app to your home screen',message:a1+a2+a3+a4+a5});}
+function sendInstallEmail(cl){
+  if(!cl||!cl.email)return;
+  var svc='service_ldwp9li';var tpl='template_install';
+  var fn=cl.name?cl.name.split(' ')[0]:'there';
+  var html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>'
+  +'body{margin:0;padding:20px;background:#e8e8e8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;}'
+  +'.wrap{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.12);}'
+  +'.hdr{background:linear-gradient(135deg,#111,#1e1e1e);padding:36px 40px 28px;text-align:center;}'
+  +'.logo{width:56px;height:56px;background:linear-gradient(135deg,#e07b39,#c05e20);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#fff;margin-bottom:12px;}'
+  +'.hdr h1{font-size:22px;font-weight:800;color:#fff;margin:0 0 6px;line-height:1.2;}'
+  +'.hdr p{font-size:14px;color:rgba(255,255,255,0.6);margin:0;}'
+  +'.body{padding:36px 40px;}'
+  +'.body p{font-size:15px;line-height:1.7;color:#333;margin:0 0 18px;}'
+  +'.dtitle{font-size:16px;font-weight:800;color:#111;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;}'
+  +'.badge{color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-right:8px;}'
+  +'.android{background:#34a853;}.ios{background:#007aff;}'
+  +'.steps{list-style:none;padding:0;margin:0 0 16px;}'
+  +'.steps li{display:flex;align-items:flex-start;gap:12px;font-size:14px;color:#333;margin-bottom:12px;line-height:1.55;}'
+  +'.num{min-width:26px;height:26px;background:#e07b39;color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;margin-top:1px;}'
+  +'.note{background:#fff8f3;border:1px solid #f0d5c0;border-radius:10px;padding:14px 18px;font-size:13px;color:#7a4020;margin:0 0 28px;line-height:1.6;}'
+  +'.divider{border:none;border-top:1px solid #f0f0f0;margin:28px 0;}'
+  +'.cta{text-align:center;margin:30px 0 10px;}'
+  +'.cta a{display:inline-block;background:linear-gradient(135deg,#e07b39,#c05e20);color:#fff;text-decoration:none;padding:14px 36px;border-radius:30px;font-size:15px;font-weight:800;}'
+  +'.cta p{font-size:12px;color:#aaa;margin-top:8px;}'
+  +'.footer{background:#fafafa;border-top:1px solid #eee;padding:24px 40px;text-align:center;}'
+  +'.footer p{font-size:12px;color:#aaa;margin:0 0 4px;}'
+  +'.footer a{color:#e07b39;text-decoration:none;}'
+  +'</style></head><body>'
+  +'<div class="wrap"><div class="hdr"><div class="logo">E</div>'
+  +'<h1>Get the EBC App<br>on Your Home Screen</h1>'
+  +'<p>No App Store. No download. Just tap and go.</p></div>'
+  +'<div class="body"><p>Hey '+fn+',</p>'
+  +'<p>Your coaching app is ready — save it to your home screen for <strong>instant one-tap access</strong>, just like a downloaded app.</p>'
+  +'<p>Takes <strong>30 seconds</strong>. Pick your device below:</p>'
+  +'<hr class="divider">'
+  +'<div class="dtitle"><span class="badge android">ANDROID</span>Google Chrome</div>'
+  +'<ol class="steps">'
+  +'<li><div class="num">1</div><span>Open <strong>Google Chrome</strong> and go to: <strong style="color:#e07b39">ethanbatesy1999.github.io/ebc-app</strong></span></li>'
+  +'<li><div class="num">2</div><span>Tap the <strong>three dots</strong> in the top-right corner.</span></li>'
+  +'<li><div class="num">3</div><span>Tap <strong>Add to Home screen</strong>.</span></li>'
+  +'<li><div class="num">4</div><span>Leave the name as <strong>EBC Coaching</strong> and tap <strong>Add</strong>.</span></li>'
+  +'<li><div class="num">5</div><span>✅ Done! The app icon appears on your home screen.</span></li>'
+  +'</ol>'
+  +'<div class="note"><strong>Samsung Internet?</strong> Tap the menu icon at the bottom, then <strong>Add page to</strong> then <strong>Home screen</strong>.</div>'
+  +'<hr class="divider">'
+  +'<div class="dtitle"><span class="badge ios">iPHONE</span>Safari</div>'
+  +'<ol class="steps">'
+  +'<li><div class="num">1</div><span>Open <strong>Safari</strong> and go to: <strong style="color:#e07b39">ethanbatesy1999.github.io/ebc-app</strong></span></li>'
+  +'<li><div class="num">2</div><span>Tap the <strong>Share button</strong> at the bottom (box with arrow pointing up).</span></li>'
+  +'<li><div class="num">3</div><span>Scroll down and tap <strong>Add to Home Screen</strong>.</span></li>'
+  +'<li><div class="num">4</div><span>Tap <strong>Add</strong> in the top-right corner.</span></li>'
+  +'<li><div class="num">5</div><span>✅ Done! The EBC Coaching icon appears on your home screen.</span></li>'
+  +'</ol>'
+  +'<div class="note"><strong>Older iPhone (iOS 12 or below)?</strong> Same steps — just reply if you get stuck and I will help personally.</div>'
+  +'<hr class="divider">'
+  +'<div class="cta"><a href="https://ethanbatesy1999.github.io/ebc-app/">Open EBC Coaching App</a>'
+  +'<p>Tap above or bookmark the link</p></div>'
+  +'<p style="margin-top:24px">Any issues? Just reply — happy to help.</p>'
+  +'<p>Talk soon,<br><strong>Ethan</strong><br><span style="color:#aaa;font-size:13px">EBC Coaching | ethanbatescoaching@gmail.com</span></p>'
+  +'</div>'
+  +'<div class="footer"><p>EBC Coaching · Northern Ireland</p>'
+  +'<p>You are receiving this because you signed up for coaching with Ethan Bates.</p>'
+  +'<p><a href="https://ethanbatesy1999.github.io/ebc-app/">Open App</a></p></div>'
+  +'</div></body></html>';
+  emailjs.send(svc,tpl,{to_email:cl.email,to_name:fn,subject:'Save your EBC Coaching app to your home screen',message:html});
+}
 function sendInstallToAll(){var clients=DB.clients.filter(function(c){return c.email;});if(!clients.length){alert('No clients with email addresses found.');return;}if(!confirm('Send app install email to '+clients.length+' client(s)?'))return;clients.forEach(function(cl,i){setTimeout(function(){sendInstallEmail(cl);},i*1500);});setTimeout(function(){alert('Done! Install email sent to '+clients.length+' client(s).');},clients.length*1500+500);}
 function boot(){emailjs.init('JVjRFBTBvNkW_9GOx');
   var session=getSession();
