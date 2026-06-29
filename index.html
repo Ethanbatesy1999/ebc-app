@@ -488,7 +488,11 @@ body{display:flex;flex-direction:column;}
   </div>
 
   <!-- MORE TAB -->
-  <div id="more-tab" class="tab-panel">
+  <div id="vitamins-tab" class="tab-panel">
+  <div class="tab-hero"><div class="section-title">Supplements</div></div>
+  <div id="vitamins-log-area"></div>
+</div>
+<div id="more-tab" class="tab-panel">
     <div class="tab-hero" style="margin-bottom:12px;">
       <div style="font-size:22px;font-weight:800;">More</div>
     </div>
@@ -514,7 +518,11 @@ body{display:flex;flex-direction:column;}
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     <span>Calendar</span>
   </button>
-  <button class="nav-item" data-tab="more" onclick="showTab('more')">
+  <button class="nav-item" data-tab="vitamins" onclick="showTab('vitamins')">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+  <span>Vitamins</span>
+</button>
+<button class="nav-item" data-tab="more" onclick="showTab('more')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
     <span>More</span>
   </button>
@@ -604,6 +612,22 @@ var DEFAULT_PROGRAMS = {
   day4:{name:'Glutes, Quads & Hamstrings',emoji:'🍑',exercises:['Hack Squat','Dumbbell Walking Lunges','Leg Extension','Glute Kickback','Lying Hamstring Curl','Hip Thrust Machine','Seated Calf Raise']},
   day5:{name:'Back & Biceps',emoji:'🔙',exercises:['Wide Grip Lat Pulldown','Single Arm Dumbbell Row','Chest Supported Incline Row','Straight Arm Cable Pulldown','Cable Face Pull','Incline Dumbbell Curl','Cable Hammer Curl']}
 };
+// ── PUSH / PULL / LEGS ───────────────────────────────────────────────
+var PPL_PROGRAM = [
+  {id:'push',name:'Push',emoji:'🔴',exercises:['Barbell Bench Press','Incline Dumbbell Press','Cable Fly','Barbell Overhead Press','Lateral Raise','Cable Rear Delt Fly','Tricep Pushdown','Skull Crusher']},
+  {id:'pull',name:'Pull',emoji:'🔵',exercises:['Wide Grip Lat Pulldown','Seated Cable Row','Single Arm Dumbbell Row','Face Pull','Barbell Curl','Hammer Curl','Incline Dumbbell Curl']},
+  {id:'legs_ppl',name:'Legs',emoji:'🟢',exercises:['Barbell Back Squat','Romanian Deadlift','Leg Press','Lying Hamstring Curl','Leg Extension','Hip Thrust','Standing Calf Raise']}
+];
+
+// ── UPPER / LOWER ────────────────────────────────────────────────────
+var UL_PROGRAM = [
+  {id:'upper_a',name:'Upper A',emoji:'💪',exercises:['Barbell Bench Press','Barbell Bent-Over Row','Incline Dumbbell Press','Wide Grip Lat Pulldown','Barbell Overhead Press','Barbell Curl','Tricep Pushdown']},
+  {id:'lower_a',name:'Lower A',emoji:'🦵',exercises:['Barbell Back Squat','Romanian Deadlift','Leg Press','Lying Hamstring Curl','Leg Extension','Standing Calf Raise']},
+  {id:'upper_b',name:'Upper B',emoji:'💪',exercises:['Incline Barbell Bench Press','Seated Cable Row','Dumbbell Shoulder Press','Chin-Up','Lateral Raise','Hammer Curl','Skull Crusher']},
+  {id:'lower_b',name:'Lower B',emoji:'🦵',exercises:['Conventional Deadlift','Bulgarian Split Squat','Hip Thrust','Seated Leg Curl','Goblet Squat','Seated Calf Raise']}
+];
+
+
 var ALL_DEFAULT_EXERCISES=(function(){
   var a=[];
   Object.values(DEFAULT_PROGRAMS).forEach(function(p){p.exercises.forEach(function(e){if(a.indexOf(e)<0)a.push(e);});});
@@ -661,6 +685,9 @@ var PROGRAM_PRESETS={
 function getClientProgram(){
   var c=getActiveClient();
   if(c&&c.customProgram&&c.customProgram.length)return c.customProgram;
+  var tmpl=c&&c.programTemplate;
+  if(tmpl==='ppl')return PPL_PROGRAM;
+  if(tmpl==='ul')return UL_PROGRAM;
   return Object.entries(DEFAULT_PROGRAMS).map(function(e){return {id:e[0],name:e[1].name,emoji:e[1].emoji,exercises:e[1].exercises};});
 }
 
@@ -855,6 +882,7 @@ function showTab(tab){
   if(tab==='nutrition')renderNutrition();
   if(tab==='calendar')renderCalendar();
   if(tab==='more')renderMore();
+  if(tab==='vitamins')renderVitamins();
 }
 
 // ── HOME TAB ──────────────────────────────────
@@ -1935,7 +1963,15 @@ function clientForm(c){
     +'<div class="admin-field"><label class="admin-label">Nutrition Notes (shown to client)</label><textarea class="admin-input" id="cf-notes" rows="3" style="resize:none;" placeholder="e.g. Hit protein every day. Higher carbs on training days.">'+(c&&c.nutritionNotes?c.nutritionNotes:'')+'</textarea></div>'
     +'<div class="admin-field"><label class="admin-label">Goals (shown to client)</label><textarea class="admin-input" id="cf-goals" rows="2" style="resize:none;" placeholder="e.g. Lose 10kg, build visible abs by summer.">'+(c&&c.goals?c.goals:'')+' </textarea></div>'
     +'<div class="admin-field"><label class="admin-label">Supplements (shown to client)</label><textarea class="admin-input" id="cf-supps" rows="2" style="resize:none;" placeholder="e.g. Creatine 5g daily, Whey protein post-workout.">'+(c&&c.supplements?c.supplements:'')+' </textarea></div>'
-    +'<div class="admin-field"><label class="admin-label">Cardio Plan (shown to client)</label><textarea class="admin-input" id="cf-cardio-plan" rows="2" style="resize:none;" placeholder="e.g. 3x per week, 30 mins steady-state.">'+(c&&c.cardioTarget?c.cardioTarget:'')+' </textarea></div>'
+    +'<div class="admin-field">
+  <label class="admin-label">Program Template</label>
+  <select id="cf-program-template" class="admin-input">
+    <option value="">Default (My Program)</option>
+    <option value="ppl">Push / Pull / Legs</option>
+    <option value="ul">Upper / Lower</option>
+  </select>
+</div>
+<div class="admin-field"><label class="admin-label">Cardio Plan (shown to client)</label><textarea class="admin-input" id="cf-cardio-plan" rows="2" style="resize:none;" placeholder="e.g. 3x per week, 30 mins steady-state.">'+(c&&c.cardioTarget?c.cardioTarget:'')+' </textarea></div>'
     +'<div class="admin-section-title">Training Program Builder</div>'
     +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Add training days and list exercises for each day (one per line).</div>'
     +'<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:11px;color:var(--muted2);">Copy from Ethan\'s templates:</span>'
@@ -2017,6 +2053,7 @@ function saveClient(){
     supplements:document.getElementById('cf-supps').value,
     cardioTarget:document.getElementById('cf-cardio-plan').value,
     color:idx>=0?DB.clients[idx].color:CLIENT_COLORS[DB.clients.length%CLIENT_COLORS.length]
+    programTemplate:document.getElementById('cf-program-template').value||'',
   };
   if(idx>=0)DB.clients[idx]=client;
   else{DB.clients.push(client);if(!DB.activeClientId)DB.activeClientId=client.id;}
@@ -2278,6 +2315,78 @@ function boot(){emailjs.init('JVjRFBTBvNkW_9GOx');
 boot();
 </script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js">
+
+// ── VITAMINS / SUPPLEMENTS TAB ────────────────────────────────────────
+var SUPPLEMENT_TEMPLATES = [
+  {id:'vitc',   name:'Vitamin C',           dose:'1000mg',  emoji:'🍊', time:'Morning',  notes:'Immune support & antioxidant'},
+  {id:'vitd',   name:'Vitamin D3',          dose:'2000 IU', emoji:'☀️', time:'Morning',  notes:'Bone health, mood & immunity'},
+  {id:'maglyc', name:'Magnesium Glycinate', dose:'400mg',   emoji:'💊', time:'Evening',  notes:'Sleep quality & muscle recovery'},
+  {id:'whey',   name:'Whey Protein',        dose:'30g',     emoji:'🥤', time:'Post-workout', notes:'Muscle repair & protein target'},
+  {id:'creat',  name:'Creatine',            dose:'5g',      emoji:'⚡', time:'Any time', notes:'Strength & power output'}
+];
+
+function getVitaminLog(clientId) {
+  var key = 'vitlog_' + clientId;
+  try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { return {}; }
+}
+function saveVitaminLog(clientId, log) {
+  localStorage.setItem('vitlog_' + clientId, JSON.stringify(log));
+}
+function toggleSupplement(suppId) {
+  var c = getActiveClient(); if(!c) return;
+  var today = new Date().toISOString().split('T')[0];
+  var log = getVitaminLog(c.id);
+  if (!log[today]) log[today] = {};
+  log[today][suppId] = !log[today][suppId];
+  saveVitaminLog(c.id, log);
+  renderVitamins();
+}
+
+function renderVitamins() {
+  var c = getActiveClient();
+  var today = new Date().toISOString().split('T')[0];
+  var log = c ? getVitaminLog(c.id) : {};
+  var todayLog = log[today] || {};
+  var taken = SUPPLEMENT_TEMPLATES.filter(function(s){ return todayLog[s.id]; }).length;
+  var total = SUPPLEMENT_TEMPLATES.length;
+
+  var html = '<div style="padding:16px 14px 8px;">'
+    + '<div style="font-size:22px;font-weight:800;margin-bottom:2px;">Supplements</div>'
+    + '<div style="font-size:13px;color:var(--muted);">' + new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}) + '</div>'
+    + '</div>';
+
+  // Progress bar
+  var pct = total ? Math.round((taken/total)*100) : 0;
+  html += '<div class="card" style="margin-bottom:0;">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+    + '<span style="font-size:13px;font-weight:600;color:var(--muted2);">TODAY'S PROGRESS</span>'
+    + '<span style="font-size:13px;font-weight:700;color:var(--accent);">' + taken + ' / ' + total + '</span>'
+    + '</div>'
+    + '<div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">'
+    + '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:3px;transition:width 0.4s;"></div>'
+    + '</div></div>';
+
+  // Supplement cards
+  html += '<div style="padding:12px 14px 0;">';
+  SUPPLEMENT_TEMPLATES.forEach(function(s) {
+    var done = !!todayLog[s.id];
+    html += '<div onclick="toggleSupplement('' + s.id + '')" style="display:flex;align-items:center;gap:14px;background:var(--s2);border:1px solid ' + (done ? 'var(--green)' : 'var(--border)') + ';border-radius:16px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all 0.2s;">'
+      + '<div style="font-size:28px;">' + s.emoji + '</div>'
+      + '<div style="flex:1;">'
+      + '<div style="font-size:15px;font-weight:700;' + (done ? 'color:var(--muted2);text-decoration:line-through;' : '') + '">' + s.name + '</div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-top:2px;">' + s.dose + ' &nbsp;·&nbsp; ' + s.time + '</div>'
+      + '<div style="font-size:11px;color:var(--muted2);margin-top:1px;">' + s.notes + '</div>'
+      + '</div>'
+      + '<div style="width:26px;height:26px;border-radius:50%;border:2px solid ' + (done ? 'var(--green)' : 'var(--border)') + ';background:' + (done ? 'var(--green)' : 'transparent') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+      + (done ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '')
+      + '</div>'
+      + '</div>';
+  });
+  html += '</div>';
+
+  document.getElementById('vitamins-log-area').innerHTML = html;
+}
+
 // ── BACK BUTTON HANDLING ──────────────────────────────────────────────
 (function() {
   // Set base state so there is always something to pop back to
