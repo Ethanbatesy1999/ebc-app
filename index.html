@@ -2277,6 +2277,45 @@ function boot(){emailjs.init('JVjRFBTBvNkW_9GOx');
 }
 boot();
 </script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js">
+// ── BACK BUTTON HANDLING ──────────────────────────────────────────────
+(function() {
+  // Set base state so there is always something to pop back to
+  history.replaceState({wkView: 'home'}, '');
+
+  window.addEventListener('popstate', function() {
+    if (ACTIVE_WK) {
+      // Mid-workout: treat back as Cancel
+      ACTIVE_WK = null;
+      clearInterval(restInterval);
+      document.getElementById('rest-bar').classList.remove('visible');
+      renderWorkoutHome();
+      history.pushState({wkView: 'home'}, '');
+    } else if (document.getElementById('wk-history') &&
+               document.getElementById('wk-history').style.display !== 'none') {
+      // In history: go back to workout home
+      renderWorkoutHome();
+      history.pushState({wkView: 'home'}, '');
+    }
+  });
+
+  // Push history state when starting a workout
+  var _startDay = startDay;
+  startDay = function(dayId) {
+    _startDay(dayId);
+    history.pushState({wkView: 'active'}, '');
+  };
+
+  // Push history state when viewing history
+  if (typeof showHistory !== 'undefined') {
+    var _showHistory = showHistory;
+    showHistory = function() {
+      _showHistory();
+      history.pushState({wkView: 'history'}, '');
+    };
+  }
+})();
+
+</script>
 </body>
 </html>
