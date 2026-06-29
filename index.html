@@ -2039,7 +2039,7 @@ function saveClient(){
     goals:document.getElementById('cf-goals').value,
     supplements:document.getElementById('cf-supps').value,
     cardioTarget:document.getElementById('cf-cardio-plan').value,
-    color:idx>=0?DB.clients[idx].color:CLIENT_COLORS[DB.clients.length%CLIENT_COLORS.length]
+    color:idx>=0?DB.clients[idx].color:CLIENT_COLORS[DB.clients.length%CLIENT_COLORS.length],
     programTemplate:document.getElementById('cf-program-template').value||'',
   };
   if(idx>=0)DB.clients[idx]=client;
