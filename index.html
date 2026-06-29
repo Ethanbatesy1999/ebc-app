@@ -1963,14 +1963,7 @@ function clientForm(c){
     +'<div class="admin-field"><label class="admin-label">Nutrition Notes (shown to client)</label><textarea class="admin-input" id="cf-notes" rows="3" style="resize:none;" placeholder="e.g. Hit protein every day. Higher carbs on training days.">'+(c&&c.nutritionNotes?c.nutritionNotes:'')+'</textarea></div>'
     +'<div class="admin-field"><label class="admin-label">Goals (shown to client)</label><textarea class="admin-input" id="cf-goals" rows="2" style="resize:none;" placeholder="e.g. Lose 10kg, build visible abs by summer.">'+(c&&c.goals?c.goals:'')+' </textarea></div>'
     +'<div class="admin-field"><label class="admin-label">Supplements (shown to client)</label><textarea class="admin-input" id="cf-supps" rows="2" style="resize:none;" placeholder="e.g. Creatine 5g daily, Whey protein post-workout.">'+(c&&c.supplements?c.supplements:'')+' </textarea></div>'
-    +'<div class="admin-field">
-  <label class="admin-label">Program Template</label>
-  <select id="cf-program-template" class="admin-input">
-    <option value="">Default (My Program)</option>
-    <option value="ppl">Push / Pull / Legs</option>
-    <option value="ul">Upper / Lower</option>
-  </select>
-</div>
+    +'+'<div class="admin-field"><label class="admin-label">Program Template</label><select id="cf-program-template" class="admin-input"><option value="">Default (My Program)</option><option value="ppl">Push / Pull / Legs</option><option value="ul">Upper / Lower</option></select></div>'
 <div class="admin-field"><label class="admin-label">Cardio Plan (shown to client)</label><textarea class="admin-input" id="cf-cardio-plan" rows="2" style="resize:none;" placeholder="e.g. 3x per week, 30 mins steady-state.">'+(c&&c.cardioTarget?c.cardioTarget:'')+' </textarea></div>'
     +'<div class="admin-section-title">Training Program Builder</div>'
     +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Add training days and list exercises for each day (one per line).</div>'
