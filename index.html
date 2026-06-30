@@ -850,6 +850,7 @@ var ACTIVE_WK=null;
 var restInterval=null;
 var restTotal=90;
 var restRemaining=0;
+var restEndTime=0;
 
 function getPrev(name){
   var wks=clientWorkouts(DB.activeClientId);
@@ -1214,6 +1215,7 @@ function buildExBlock(ex,exIdx){
   });
   wrap.innerHTML='<div class="ex-header"><div>'
     +'<div class="ex-name" onclick="showExerciseDemo(\''+ex.name+'\')" style="cursor:pointer;">'+ex.name+' <span style="font-size:11px;color:var(--accent);">▶ How To</span></div>'
+    +'<div style="font-size:11px;opacity:0.55;margin-top:2px;">'+getExerciseData(ex.name).reps+' reps · '+Math.round(getExerciseData(ex.name).rest/60)+'min rest</div>'
     +(prevDate?'<div style="font-size:11px;color:var(--muted);">Last: '+prevDate+'</div>':'')
     +'</div><div class="ex-actions"><button class="ex-btn" onclick="startSwap('+exIdx+')">Swap</button><button class="ex-btn" onclick="deleteEx('+exIdx+')" style="color:var(--red);">Remove</button></div></div>'
     +(ex._swapping?buildSwapUI(exIdx):'')
@@ -1240,24 +1242,36 @@ function logSet(exIdx,setIdx){
   var s=ACTIVE_WK.exercises[exIdx].sets[setIdx];
   if(s.logged){s.logged=false;renderExercises();return;}
   if(!s.w&&!s.r){showToast('Enter weight and reps first');return;}
-  s.logged=true;s.unit=DB.globalUnit;saveActiveWK();renderExercises();startRest(90);
+  s.logged=true;s.unit=DB.globalUnit;saveActiveWK();renderExercises();startRest(getExerciseData(ACTIVE_WK.exercises[exIdx].name).rest);
 }
 function addSet(exIdx){var u=DB.globalUnit;ACTIVE_WK.exercises[exIdx].sets.push({w:'',r:'',unit:u,logged:false});renderExercises();}
 function deleteEx(idx){if(!confirm('Remove this exercise?'))return;ACTIVE_WK.exercises.splice(idx,1);renderExercises();}
 
+function sendSWMsg(msg){if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage(msg);}
+function getExerciseData(name){
+  var n=(name||'').toLowerCase();
+  if(/squat|deadlift|romanian|rdl/.test(n))return{rest:180,reps:'3-5'};
+  if(/bench press|overhead press|ohp|barbell row|bent.over/.test(n))return{rest:150,reps:'5-8'};
+  if(/incline|decline|dumbbell press|leg press|lat pull|cable row/.test(n))return{rest:120,reps:'8-12'};
+  if(/row|pull.down|pull.up|chin.up|dip/.test(n))return{rest:90,reps:'10-12'};
+  return{rest:75,reps:'12-15'};
+}
 function startRest(secs){
   stopRest();restTotal=secs;restRemaining=secs;
+  restEndTime=Date.now()+(secs*1000);
   document.getElementById('rest-bar').classList.add('visible');
   document.getElementById('rest-time').textContent=fmtTime(secs);
   document.getElementById('rest-progress').style.width='100%';
   restInterval=setInterval(function(){
-    restRemaining--;
-    document.getElementById('rest-time').textContent=fmtTime(restRemaining);
-    document.getElementById('rest-progress').style.width=((restRemaining/restTotal)*100)+'%';
-    if(restRemaining<=0){stopRest();beep();}
+    var rem=Math.max(0,Math.round((restEndTime-Date.now())/1000));
+    restRemaining=rem;
+    document.getElementById('rest-time').textContent=fmtTime(rem);
+    document.getElementById('rest-progress').style.width=((rem/restTotal)*100)+'%';
+    if(rem<=0){stopRest();beep();sendSWMsg({type:'cancel'});}
   },1000);
+  sendSWMsg({type:'startRest',secs:secs});
 }
-function stopRest(){clearInterval(restInterval);restInterval=null;document.getElementById('rest-bar').classList.remove('visible');}
+function stopRest(){clearInterval(restInterval);restInterval=null;restEndTime=0;var b=document.getElementById('rest-bar');if(b)b.classList.remove('visible');}
 function fmtTime(s){return Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0');}
 function beep(){
   try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var o=ctx.createOscillator();var g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.value=0.3;o.start();g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);o.stop(ctx.currentTime+0.5);}catch(e){}
@@ -2271,7 +2285,7 @@ function sendWelcomeEmail(clientId){
 }
 function sendInstallEmail(cl){if(!cl||!cl.email)return;var fn=cl.name?cl.name.split(' ')[0]:'there';emailjs.send('service_ldwp9li','template_install',{to_email:cl.email,to_name:fn,first_name:fn,subject:'📱 Save your EBC app to your phone — takes 30 seconds'});}
 function sendInstallToAll(){var clients=DB.clients.filter(function(c){return c.email;});if(!clients.length){alert('No clients with email addresses found.');return;}if(!confirm('Send app install email to '+clients.length+' client(s)?'))return;clients.forEach(function(cl,i){setTimeout(function(){sendInstallEmail(cl);},i*1500);});setTimeout(function(){alert('Done! Install email sent to '+clients.length+' client(s).');},clients.length*1500+500);}
-function boot(){emailjs.init('JVjRFBTBvNkW_9GOx');
+function boot(){if('serviceWorker' in navigator){navigator.serviceWorker.register('/ebc-app/sw.js').catch(function(e){console.warn('SW',e);});}if(typeof Notification!=='undefined'&&Notification.permission==='default'){Notification.requestPermission();}document.addEventListener('visibilitychange',function(){if(!document.hidden&&restEndTime>0){var r=Math.max(0,Math.round((restEndTime-Date.now())/1000));if(r<=0)stopRest();}});emailjs.init('JVjRFBTBvNkW_9GOx');
   var session=getSession();
   if(!session){showLoginScreen();return;}
   if(session.role==='coach'){
