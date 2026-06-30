@@ -1291,13 +1291,12 @@ function finishWorkout(){
   });
 }
 function showRatingModal(cb){
-  var labels=['😌 Easy','💪 Moderate','🔥 Hard'];
+  var ratingNames=['Easy','Moderate','Hard'];
   var html='<h3 style="margin:0 0 14px;font-size:18px;text-align:center;">Rate Your Workout</h3>'
-    +'<div id="rating-label" style="text-align:center;font-size:24px;font-weight:700;margin-bottom:6px;">💪 Moderate</div>'
+    +'<div id="rating-label" style="text-align:center;font-size:28px;font-weight:700;margin-bottom:6px;">Moderate</div>'
     +'<div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.55;margin:0 2px 6px;">'
-    +labels.map(function(l){return '<span>'+l+'</span>';}).join('')+'</div>'
+    +'<span>Easy</span><span>Moderate</span><span>Hard</span></div>'
     +'<input type="range" id="wk-rating" min="0" max="2" step="1" value="1"'
-    +' oninput="document.getElementById('rating-label').textContent=['😌 Easy','💪 Moderate','🔥 Hard'][this.value]"'
     +' style="width:100%;accent-color:var(--accent);cursor:pointer;margin-bottom:18px;">'
     +'<textarea id="wk-notes" placeholder="Any notes? (optional)" rows="3"'
     +' style="width:100%;box-sizing:border-box;background:var(--surface);color:var(--text);border:1px solid var(--border,#333);border-radius:8px;padding:10px;font-size:14px;resize:none;margin-bottom:14px;"></textarea>'
@@ -1306,11 +1305,14 @@ function showRatingModal(cb){
     +'<button id="save-wk-btn" style="flex:2;padding:12px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">Save Workout</button>'
     +'</div>';
   openModal(html);
+  document.getElementById('wk-rating').oninput=function(){
+    document.getElementById('rating-label').textContent=ratingNames[this.value];
+  };
   document.getElementById('save-wk-btn').onclick=function(){
     var r=parseInt(document.getElementById('wk-rating').value);
     var n=document.getElementById('wk-notes').value;
     closeModal();
-    cb(['Easy','Moderate','Hard'][r],n);
+    cb(ratingNames[r],n);
   };
 }
 function cancelWorkout(){if(!confirm('Cancel workout? Progress will be lost.'))return;ACTIVE_WK=null;saveActiveWK();stopRest();renderWorkoutHome();}
