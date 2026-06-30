@@ -1247,7 +1247,7 @@ function logSet(exIdx,setIdx){
 function addSet(exIdx){var u=DB.globalUnit;ACTIVE_WK.exercises[exIdx].sets.push({w:'',r:'',unit:u,logged:false});renderExercises();}
 function deleteEx(idx){if(!confirm('Remove this exercise?'))return;ACTIVE_WK.exercises.splice(idx,1);renderExercises();}
 
-function sendSWMsg(msg){if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage(msg);}
+function sendSWMsg(msg){if(!navigator.serviceWorker)return;if(navigator.serviceWorker.controller){navigator.serviceWorker.controller.postMessage(msg);}else{navigator.serviceWorker.ready.then(function(r){if(r.active)r.active.postMessage(msg);});}}
 function getExerciseData(name){
   var n=(name||'').toLowerCase();
   if(/squat|deadlift|romanian|rdl/.test(n))return{rest:180,reps:'3-5'};
@@ -1256,7 +1256,7 @@ function getExerciseData(name){
   if(/row|pull.down|pull.up|chin.up|dip/.test(n))return{rest:90,reps:'10-12'};
   return{rest:75,reps:'12-15'};
 }
-function startRest(secs){
+function startRest(secs){if(typeof Notification!=='undefined'&&Notification.permission==='default'){Notification.requestPermission();}
   stopRest();restTotal=secs;restRemaining=secs;
   restEndTime=Date.now()+(secs*1000);
   document.getElementById('rest-bar').classList.add('visible');
@@ -1280,11 +1280,38 @@ function finishWorkout(){
   if(!ACTIVE_WK)return;
   var hasLogged=ACTIVE_WK.exercises.some(function(e){return e.sets.some(function(s){return s.logged;});});
   if(!hasLogged&&!confirm('No sets logged. Save anyway?'))return;
-  ACTIVE_WK.exercises.forEach(function(ex){delete ex._swapping;delete ex._prev;});
-  var wkToSave=ACTIVE_WK;
-  DB.workouts.push(wkToSave);saveDB();ACTIVE_WK=null;saveActiveWK();stopRest();
-  db.collection('workouts').add(wkToSave).catch(function(err){console.warn('Workout cloud save failed:',err.message);});
-  showToast('Workout saved');renderWorkoutHome();
+  showRatingModal(function(rating,notes){
+    ACTIVE_WK.exercises.forEach(function(ex){delete ex._swapping;delete ex._prev;});
+    if(rating)ACTIVE_WK.rating=rating;
+    if(notes)ACTIVE_WK.notes=notes.trim();
+    var wkToSave=ACTIVE_WK;
+    DB.workouts.push(wkToSave);saveDB();ACTIVE_WK=null;saveActiveWK();stopRest();
+    db.collection('workouts').add(wkToSave).catch(function(err){console.warn('Workout cloud save failed:',err.message);});
+    showToast('Workout saved – '+rating);renderWorkoutHome();
+  });
+}
+function showRatingModal(cb){
+  var labels=['😌 Easy','💪 Moderate','🔥 Hard'];
+  var html='<h3 style="margin:0 0 14px;font-size:18px;text-align:center;">Rate Your Workout</h3>'
+    +'<div id="rating-label" style="text-align:center;font-size:24px;font-weight:700;margin-bottom:6px;">💪 Moderate</div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.55;margin:0 2px 6px;">'
+    +labels.map(function(l){return '<span>'+l+'</span>';}).join('')+'</div>'
+    +'<input type="range" id="wk-rating" min="0" max="2" step="1" value="1"'
+    +' oninput="document.getElementById('rating-label').textContent=['😌 Easy','💪 Moderate','🔥 Hard'][this.value]"'
+    +' style="width:100%;accent-color:var(--accent);cursor:pointer;margin-bottom:18px;">'
+    +'<textarea id="wk-notes" placeholder="Any notes? (optional)" rows="3"'
+    +' style="width:100%;box-sizing:border-box;background:var(--surface);color:var(--text);border:1px solid var(--border,#333);border-radius:8px;padding:10px;font-size:14px;resize:none;margin-bottom:14px;"></textarea>'
+    +'<div style="display:flex;gap:10px;">'
+    +'<button onclick="closeModal()" style="flex:1;padding:12px;border-radius:8px;border:1px solid var(--border,#333);background:var(--surface);color:var(--text);font-size:15px;cursor:pointer;">Cancel</button>'
+    +'<button id="save-wk-btn" style="flex:2;padding:12px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">Save Workout</button>'
+    +'</div>';
+  openModal(html);
+  document.getElementById('save-wk-btn').onclick=function(){
+    var r=parseInt(document.getElementById('wk-rating').value);
+    var n=document.getElementById('wk-notes').value;
+    closeModal();
+    cb(['Easy','Moderate','Hard'][r],n);
+  };
 }
 function cancelWorkout(){if(!confirm('Cancel workout? Progress will be lost.'))return;ACTIVE_WK=null;saveActiveWK();stopRest();renderWorkoutHome();}
 
@@ -2285,7 +2312,7 @@ function sendWelcomeEmail(clientId){
 }
 function sendInstallEmail(cl){if(!cl||!cl.email)return;var fn=cl.name?cl.name.split(' ')[0]:'there';emailjs.send('service_ldwp9li','template_install',{to_email:cl.email,to_name:fn,first_name:fn,subject:'📱 Save your EBC app to your phone — takes 30 seconds'});}
 function sendInstallToAll(){var clients=DB.clients.filter(function(c){return c.email;});if(!clients.length){alert('No clients with email addresses found.');return;}if(!confirm('Send app install email to '+clients.length+' client(s)?'))return;clients.forEach(function(cl,i){setTimeout(function(){sendInstallEmail(cl);},i*1500);});setTimeout(function(){alert('Done! Install email sent to '+clients.length+' client(s).');},clients.length*1500+500);}
-function boot(){if('serviceWorker' in navigator){navigator.serviceWorker.register('/ebc-app/sw.js').catch(function(e){console.warn('SW',e);});}if(typeof Notification!=='undefined'&&Notification.permission==='default'){Notification.requestPermission();}document.addEventListener('visibilitychange',function(){if(!document.hidden&&restEndTime>0){var r=Math.max(0,Math.round((restEndTime-Date.now())/1000));if(r<=0)stopRest();}});emailjs.init('JVjRFBTBvNkW_9GOx');
+function boot(){if('serviceWorker' in navigator){navigator.serviceWorker.register('/ebc-app/sw.js').catch(function(e){console.warn('SW',e);});}document.addEventListener('visibilitychange',function(){if(!document.hidden&&restEndTime>0){var r=Math.max(0,Math.round((restEndTime-Date.now())/1000));if(r<=0)stopRest();}});emailjs.init('JVjRFBTBvNkW_9GOx');
   var session=getSession();
   if(!session){showLoginScreen();return;}
   if(session.role==='coach'){
